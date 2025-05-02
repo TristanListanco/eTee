@@ -509,12 +509,14 @@ body {
 
 .table-wrapper {
   overflow-x: auto;
+  border-radius: var(--border-radius-sm);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  table-layout: fixed;
 }
 
 thead {
@@ -528,17 +530,29 @@ th {
   color: var(--text-color);
   border-bottom: 2px solid var(--border-color);
   white-space: nowrap;
+  transition: color var(--transition-speed), border-color var(--transition-speed);
 }
 
 td {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-color);
+  transition: color var(--transition-speed), border-color var(--transition-speed);
+  vertical-align: middle;
 }
+
+
 
 td:last-child {
   text-align: center;
 }
+
+/* Column Widths */
+th:nth-child(1), td:nth-child(1) { width: 20%; } /* Date & Time */
+th:nth-child(2), td:nth-child(2) { width: 25%; } /* Activity */
+th:nth-child(3), td:nth-child(3) { width: 15%; } /* Value */
+th:nth-child(4), td:nth-child(4) { width: 20%; } /* Status */
+th:nth-child(5), td:nth-child(5) { width: 20%; text-align: center; } /* Actions */
 
 tbody tr {
   transition: background-color var(--transition-speed);
@@ -548,6 +562,8 @@ tbody tr:hover {
   background-color: rgba(var(--primary-color-rgb, 255, 136, 0), 0.05);
 }
 
+
+/* View Button Enhancement */
 .view-btn {
   display: inline-flex;
   align-items: center;
@@ -556,7 +572,7 @@ tbody tr:hover {
   color: var(--primary-color);
   border: none;
   border-radius: var(--border-radius-sm);
-  padding: 4px 10px;
+  padding: 6px 12px;
   font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
@@ -566,21 +582,34 @@ tbody tr:hover {
 .view-btn:hover {
   background-color: var(--primary-color);
   color: white;
+  transform: translateY(-2px);
 }
 
 .view-btn i {
-  margin-right: 4px;
+  margin-right: 6px;
   font-size: 0.875rem;
 }
+
 
 /* Status indicators */
 .status {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 500;
+  text-align: center;
+  position: relative;
+}
+
+.status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
 }
 
 .status.completed {
@@ -588,14 +617,44 @@ tbody tr:hover {
   color: var(--success-color);
 }
 
+.status.completed::before {
+  background-color: var(--success-color);
+}
+
 .status.in-progress {
   background-color: rgba(59, 130, 246, 0.1);
   color: var(--info-color);
 }
 
+.status.in-progress::before {
+  background-color: var(--info-color);
+}
+
 .status.scheduled {
   background-color: rgba(245, 158, 11, 0.1);
   color: var(--warning-color);
+}
+
+.status.scheduled::before {
+  background-color: var(--warning-color);
+}
+
+.status.normal {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.status.normal::before {
+  background-color: var(--success-color);
+}
+
+.status.abnormal {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.status.abnormal::before {
+  background-color: var(--danger-color);
 }
 
 /* Modal Styles */
@@ -889,7 +948,7 @@ input[type="checkbox"] {
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background-color: var(--primary-color);
-  color: white !important;
+  color:  var(--primary-dark) !important;
   border: none;
   border-radius: var(--border-radius-sm);
   font-weight: 500;
@@ -901,6 +960,7 @@ input[type="checkbox"] {
 .action-button:hover {
   background-color: var(--primary-dark);
   transform: translateY(-2px);
+  color: white !important;
   box-shadow: var(--shadow-md);
 }
 

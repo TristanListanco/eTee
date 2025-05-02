@@ -154,7 +154,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const humidity = parseFloat(document.getElementById('humidity').value);
       const co2 = parseInt(document.getElementById('co2').value);
       const ammonia = parseFloat(document.getElementById('ammonia').value);
-      const ph = parseFloat(document.getElementById('ph').value);
       
       // Create new measurement object
       const newMeasurement = {
@@ -165,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
         humidity,
         co2,
         ammonia,
-        ph
+      
       };
       
       // Save to local storage
@@ -213,11 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
       temperatureValue.textContent = `${measurement.temperature}°C`;
     }
     
-    // Update pH card
-    const phValue = document.querySelector('.card:nth-child(2) .card-value');
-    if (phValue) {
-      phValue.textContent = measurement.ph.toFixed(2);
-    }
+    
     
     // Update humidity card
     const humidityValue = document.querySelector('.humidity-value');
@@ -245,36 +240,87 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   
   // Function to add a new row to the activity table
-  function updateActivityTable(measurement) {
-    const tableBody = document.querySelector('tbody');
-    if (!tableBody) return;
-    
-    // Format date for display
-    const date = new Date(measurement.timestamp);
-    const formattedDate = date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
-    
-    // Create a new row for each measurement type
-    const sensors = [
-      { type: 'temperature', label: 'Temperature reading', value: `${measurement.temperature}°C` },
-      { type: 'ph', label: 'pH level reading', value: measurement.ph.toFixed(2) },
-      { type: 'humidity', label: 'Humidity reading', value: `${measurement.humidity}%` },
-      { type: 'co2', label: 'CO₂ level reading', value: `${measurement.co2} ppm` },
-      { type: 'ammonia', label: 'Ammonia level reading', value: `${measurement.ammonia} ppm` }
-    ];
-    
-    // Add the most recent reading to the top
-    const firstSensor = sensors[0];
+  // Enhanced table functionality for Recent Activities
+
+// Function to update activity table with new data
+function updateActivityTable(measurement) {
+  const tableBody = document.querySelector('tbody');
+  if (!tableBody) return;
+  
+  // Format date and time for display
+  const now = new Date(measurement.timestamp);
+  const formattedDate = now.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+  
+  const formattedTime = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  
+  // Define normal ranges for each parameter
+  const normalRanges = {
+    temperature: { min: 26.0, max: 29.0 },
+   
+    humidity: { min: 50, max: 70 },
+    co2: { min: 350, max: 500 },
+    ammonia: { min: 0, max: 0.25 }
+  };
+  
+  // Check if each value is within normal range
+  const isNormal = {
+    temperature: measurement.temperature >= normalRanges.temperature.min && 
+                 measurement.temperature <= normalRanges.temperature.max,
+    humidity: measurement.humidity >= normalRanges.humidity.min && 
+              measurement.humidity <= normalRanges.humidity.max,
+    co2: measurement.co2 >= normalRanges.co2.min && 
+         measurement.co2 <= normalRanges.co2.max,
+    ammonia: measurement.ammonia >= normalRanges.ammonia.min && 
+             measurement.ammonia <= normalRanges.ammonia.max
+  };
+  
+  // Create a new row for each measurement type
+  const sensors = [
+    { 
+      type: 'temperature', 
+      label: 'Temperature reading', 
+      value: `${measurement.temperature}°C`,
+      isNormal: isNormal.temperature
+    },
+   
+    { 
+      type: 'humidity', 
+      label: 'Humidity reading', 
+      value: `${measurement.humidity}%`,
+      isNormal: isNormal.humidity
+    },
+    { 
+      type: 'co2', 
+      label: 'CO₂ level reading', 
+      value: `${measurement.co2} ppm`,
+      isNormal: isNormal.co2
+    },
+    { 
+      type: 'ammonia', 
+      label: 'Ammonia level reading', 
+      value: `${measurement.ammonia} ppm`,
+      isNormal: isNormal.ammonia
+    }
+  ];
+  
+  // Add the most recent reading to the top
+  sensors.forEach(sensor => {
     const newRow = document.createElement('tr');
-    newRow.dataset.sensor = firstSensor.type;
+    newRow.dataset.sensor = sensor.type;
     
     newRow.innerHTML = `
-      <td>${formattedDate}</td>
-      <td>${firstSensor.label}: ${firstSensor.value}</td>
-      <td><span class="status completed">Completed</span></td>
+      <td>${formattedDate} • ${formattedTime}</td>
+      <td>${sensor.label}</td>
+      <td>${sensor.value}</td>
+      <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
       <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
     `;
     
@@ -285,17 +331,264 @@ document.addEventListener("DOMContentLoaded", () => {
       tableBody.appendChild(newRow);
     }
     
-    // Remove excess rows if needed
-    const maxRows = 5;
-    while (tableBody.children.length > maxRows) {
-      tableBody.removeChild(tableBody.lastChild);
-    }
-    
     // Apply current filter
+    const sensorSelector = document.getElementById('sensorSelector');
     if (sensorSelector && sensorSelector.value !== 'all' && newRow.dataset.sensor !== sensorSelector.value) {
       newRow.style.display = 'none';
     }
+  });
+  
+  // Remove excess rows if needed (keep 5 per sensor type)
+  const sensorTypes = ['temperature', 'humidity', 'co2', 'ammonia'];
+  
+  sensorTypes.forEach(type => {
+    const rows = tableBody.querySelectorAll(`tr[data-sensor="${type}"]`);
+    if (rows.length > 5) {
+      for (let i = 5; i < rows.length; i++) {
+        tableBody.removeChild(rows[i]);
+      }
+    }
+  });
+  
+  // Add click event listeners to new view buttons
+  const viewButtons = tableBody.querySelectorAll('.view-btn');
+  viewButtons.forEach(btn => {
+    if (!btn.hasAttribute('data-listener')) {
+      btn.setAttribute('data-listener', 'true');
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const date = row.cells[0].textContent;
+        const activity = row.cells[1].textContent;
+        const value = row.cells[2].textContent;
+        const status = row.cells[3].textContent;
+        
+        showDetailModal(date, activity, value, status, row.dataset.sensor);
+      });
+    }
+  });
+}
+
+// Function to show a modal with detailed information about a reading
+function showDetailModal(date, activity, value, status, sensorType) {
+  // Check if a detail modal already exists and remove it
+  const existingModal = document.querySelector('.detail-modal');
+  if (existingModal) {
+    document.body.removeChild(existingModal);
   }
+  
+  // Get the appropriate icon based on sensor type
+  let icon;
+  switch(sensorType) {
+    case 'temperature':
+      icon = 'bxs-hot';
+      break;
+   
+    case 'humidity':
+      icon = 'bxs-droplet-half';
+      break;
+    case 'co2':
+      icon = 'bxs-cloud';
+      break;
+    case 'ammonia':
+      icon = 'bxs-flask';
+      break;
+    default:
+      icon = 'bxs-dashboard';
+  }
+  
+  // Create modal elements
+  const modal = document.createElement('div');
+  modal.className = 'modal detail-modal active';
+  
+  const modalContent = document.createElement('div');
+  modalContent.className = 'modal-content';
+  
+  // Modal header
+  const modalHeader = document.createElement('div');
+  modalHeader.className = 'modal-header';
+  
+  const modalTitle = document.createElement('h3');
+  modalTitle.innerHTML = `<i class='bx ${icon}'></i> ${activity} Details`;
+  
+  const closeButton = document.createElement('button');
+  closeButton.className = 'close-button';
+  closeButton.innerHTML = '&times;';
+  closeButton.addEventListener('click', () => {
+    modal.classList.remove('active');
+    setTimeout(() => {
+      document.body.removeChild(modal);
+    }, 300);
+  });
+  
+  modalHeader.appendChild(modalTitle);
+  modalHeader.appendChild(closeButton);
+  
+  // Modal body
+  const modalBody = document.createElement('div');
+  modalBody.className = 'modal-body';
+  
+  // Create detail items
+  const details = [
+    { label: 'Date & Time', value: date },
+    { label: 'Reading', value: value },
+    { label: 'Status', value: status, isStatus: true, type: status.toLowerCase().includes('normal') ? 'normal' : 'abnormal' },
+    { label: 'Sensor ID', value: `SEN-${sensorType.substring(0, 3).toUpperCase()}-001` },
+    { label: 'Location', value: 'Main Tank' }
+  ];
+  
+  details.forEach(detail => {
+    const detailRow = document.createElement('div');
+    detailRow.className = 'detail-row';
+    
+    const detailLabel = document.createElement('div');
+    detailLabel.className = 'detail-label';
+    detailLabel.textContent = detail.label;
+    
+    const detailValue = document.createElement('div');
+    detailValue.className = 'detail-value';
+    
+    if (detail.isStatus) {
+      detailValue.innerHTML = `<span class="status ${detail.type}">${detail.value}</span>`;
+    } else {
+      detailValue.textContent = detail.value;
+    }
+    
+    detailRow.appendChild(detailLabel);
+    detailRow.appendChild(detailValue);
+    modalBody.appendChild(detailRow);
+  });
+  
+  // Add a chart placeholder
+  const chartSection = document.createElement('div');
+  chartSection.className = 'detail-chart';
+  chartSection.innerHTML = `
+    <h4>Historical Data (Last 24 Hours)</h4>
+    <div class="chart-placeholder mini">
+      <i class='bx bx-line-chart'></i>
+      <p>Historical data chart would appear here</p>
+    </div>
+  `;
+  
+  modalBody.appendChild(chartSection);
+  
+  // Add actions buttons
+  const actionsSection = document.createElement('div');
+  actionsSection.className = 'detail-actions';
+  
+  const exportButton = document.createElement('button');
+  exportButton.className = 'action-button small';
+  exportButton.innerHTML = '<i class="bx bx-export"></i> Export Data';
+  
+  const printButton = document.createElement('button');
+  printButton.className = 'action-button small secondary';
+  printButton.innerHTML = '<i class="bx bx-printer"></i> Print Report';
+  
+  actionsSection.appendChild(exportButton);
+  actionsSection.appendChild(printButton);
+  modalBody.appendChild(actionsSection);
+  
+  // Assemble modal
+  modalContent.appendChild(modalHeader);
+  modalContent.appendChild(modalBody);
+  modal.appendChild(modalContent);
+  
+  // Add to DOM
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        document.body.removeChild(modal);
+      }, 300);
+    }
+  });
+  
+  // Show a notification
+  showNotification(`Viewing details for ${activity} from ${date}`, 'info');
+}
+
+// Add this CSS to your stylesheet
+const detailStyles = `
+.detail-row {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-label {
+  font-weight: 500;
+  width: 30%;
+  color: var(--text-light);
+}
+
+.detail-value {
+  width: 70%;
+  color: var(--text-color);
+}
+
+.detail-chart {
+  margin-top: 20px;
+}
+
+.detail-chart h4 {
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  color: var(--text-color);
+}
+
+.chart-placeholder.mini {
+  height: 150px;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.action-button.small {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+}
+
+.action-button.secondary {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.action-button.secondary:hover {
+  background-color: var(--bg-light);
+  border-color: var(--text-color);
+}
+`;
+
+// Add styles to document
+const styleSheet = document.createElement("style");
+styleSheet.textContent = detailStyles;
+document.head.appendChild(styleSheet);
+
+// Initialize table view events
+document.addEventListener('DOMContentLoaded', () => {
+  // Add click events to existing view buttons
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    if (!btn.hasAttribute('data-listener')) {
+      btn.setAttribute('data-listener', 'true');
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const date = row.cells[0].textContent;
+        const activity = row.cells[1].textContent;
+        const value = row.cells[2].textContent;
+        const status = row.querySelector('.status').textContent;
+        
+        showDetailModal(date, activity, value, status, row.dataset.sensor);
+      });
+    }
+  });
+});
   
   // Function to update the chart display
   function updateChartDisplay(dataType) {
@@ -308,10 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
         title = 'Temperature';
         unit = '°C';
         break;
-      case 'ph':
-        title = 'pH Level';
-        unit = '';
-        break;
+     
       case 'humidity':
         title = 'Humidity';
         unit = '%';
@@ -455,4 +745,6 @@ document.addEventListener("DOMContentLoaded", () => {
       showNotification(`Viewing details for: ${activity}`, 'info');
     });
   });
+
+  
 });
