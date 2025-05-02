@@ -3,13 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
+  <title>ETee Dashboard</title>
   <link rel="stylesheet" href="Dashboard.css">
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <!-- sidebar sa left side -->
+    <!-- Mobile sidebar toggle -->
+    <button class="mobile-toggle" id="sidebarToggle">
+      <i class='bx bx-menu'></i>
+    </button>
+    
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="company-name">ETee</div>
       <div class="admin"> 
@@ -20,173 +28,234 @@
       </div>
 
       <nav class="nav">
-        <a href="#dashboard" class="active">Dashboard</a>
-        <a href="#orders">Orders</a>
-        <a href="#products">Products</a>
-        <a href="#customers">Customers</a>
-        <a href="#reports">Reports</a>
-        <a href="#integrations">Integrations</a>
-
-        <div class="report-title">SAVED REPORTS</div>
-
-        <a href="#current-month">Current month</a>
-        <a href="#last-quarter">Last quarter</a>
-        <a href="#social-engagement">Social engagement</a>
-        <a href="#year-end-sale">Year-end sale</a>
-        <a href="#settings">Settings</a>
-
-        <div class="settings">
-          <a href="#sign-out" class="sign-out">Sign out</a>
-        </div>
-
+        <a href="#dashboard" class="active">
+          <i class='bx bxs-dashboard'></i>Dashboard
+        </a>
+        <a href="#sign-out" class="sign-out">
+          <i class='bx bxs-log-out'></i>Sign out
+        </a>
       </nav>
     </aside>
 
-    <!-- kanang sa tunga-->
+    <!-- Main Content -->
     <main class="main-content">
-
-      <!-- kanang dashboard-->
+      <!-- Dashboard -->
       <div id="dashboard" class="page-section active">
-        <div class="top-bar"><h1>Dashboard</h1>
+        <div class="top-bar">
+          <h1><i class='bx bxs-dashboard'></i>Dashboard</h1>
           <div class="actions">
-            <button>Share</button>
-            <button>Export</button>
+            <button id="addDataBtn" class="action-button">
+              <i class='bx bx-plus-circle'></i> Add Data
+            </button>          
+            
+            <button>
+              <i class='bx bx-export'></i>Export
+            </button>
             <select>
               <option>This week</option>
+              <option>This month</option>
+              <option>This year</option>
+              <option>All time</option>
             </select>
           </div>
         </div>
+        
+        <!-- Cards Grid -->
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class='bx bxs-hot'></i>Temperature
+              </div>
+            </div>
+            <div class="card-value">28.7°C</div>
+            <div class="card-description">Water temperature measurement</div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class='bx bxs-vial'></i>pH Level
+              </div>
+            </div>
+            <div class="card-value">8.77</div>
+            <div class="card-description">Measure of water acidity or alkalinity</div>
+          </div>
+          
+          <div class="card humidity-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class='bx bxs-droplet-half'></i>Humidity
+              </div>
+            </div>
+            <div class="card-value humidity-value">0%</div>
+            <div class="card-description">Relative humidity measurement</div>
+          </div>
+          
+          <div class="card co2-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class='bx bxs-cloud'></i>CO₂ Level
+              </div>
+            </div>
+            <div class="card-value co2-value">0 ppm</div>
+            <div class="card-description">Carbon dioxide concentration</div>
+          </div>
+          
+          <div class="card ammonia-card">
+            <div class="card-header">
+              <div class="card-title">
+                <i class='bx bxs-flask'></i>Ammonia Level
+              </div>
+            </div>
+            <div class="card-value ammonia-value">0 ppm</div>
+            <div class="card-description">Ammonia concentration</div>
+          </div>
+        </div>
   
-        <!-- diri ang chart -->
-        <div class="chart">
-          <div class="chart-placeholder">[ Chart Goes Here ]</div>
+        <!-- Chart -->
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Monthly Performance</div>
+            <div class="chart-controls">
+              <select id="chartDataSelector">
+                <option value="temperature">Temperature</option>
+                <option value="ph">pH Level</option>
+                <option value="humidity">Humidity</option>
+                <option value="co2">CO₂ Level</option>
+                <option value="ammonia">Ammonia Level</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart">
+            <div class="chart-placeholder">
+              <i class='bx bx-line-chart'></i>
+              <p>Chart data will be displayed here</p>
+            </div>
+          </div>
         </div>
         
-  
-        <!-- mao ni ang table sa ubos -->
+        <!-- Table -->
         <section class="data-section">
-          <h2>Section title</h2>
+          <div class="section-header">
+            <h2><i class='bx bx-table'></i>Recent Activities</h2>
+            <div class="sensor-selector">
+              <label for="sensorSelector">View readings for:</label>
+              <select id="sensorSelector">
+                <option value="all">All Sensors</option>
+                <option value="temperature">Temperature</option>
+                <option value="ph">pH Level</option>
+                <option value="humidity">Humidity</option>
+                <option value="co2">CO₂ Level</option>
+                <option value="ammonia">Ammonia Level</option>
+              </select>
+            </div>
+          </div>
           <div class="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>Header</th>
-                  <th>Header</th>
-                  <th>Header</th>
-                  <th>Header</th>
+                  <th>Date</th>
+                  <th>Activity</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>random</td>
-                  <td>data</td>
-                  <td>placeholder</td>
-                  <td>text</td>
+                <tr data-sensor="temperature">
+                  <td>May 2, 2025</td>
+                  <td>Temperature reading: 28.7°C</td>
+                  <td><span class="status completed">Completed</span></td>
+                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
                 </tr>
-                <tr>
-                  <td>placeholder</td>
-                  <td>irrelevant</td>
-                  <td>visual</td>
-                  <td>layout</td>
+                <tr data-sensor="ph">
+                  <td>May 1, 2025</td>
+                  <td>pH level reading: 8.77</td>
+                  <td><span class="status in-progress">In progress</span></td>
+                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
                 </tr>
-                <tr>
-                  <td>rich</td>
-                  <td>tabular</td>
-                  <td>illustrative</td>
-                  <td>data</td>
+                <tr data-sensor="humidity">
+                  <td>April 30, 2025</td>
+                  <td>Humidity reading: 65%</td>
+                  <td><span class="status completed">Completed</span></td>
+                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
                 </tr>
-                <tr>
-                  <td>information</td>
-                  <td>placeholder</td>
-                  <td>layout</td>
-                  <td>dashboard</td>
+                <tr data-sensor="co2">
+                  <td>April 29, 2025</td>
+                  <td>CO₂ level reading: 458 ppm</td>
+                  <td><span class="status completed">Completed</span></td>
+                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
                 </tr>
-                <tr>
-                  <td>text</td>
-                  <td>irrelevant</td>
-                  <td>text</td>
-                  <td>placeholder</td>
+                <tr data-sensor="ammonia">
+                  <td>April 28, 2025</td>
+                  <td>Ammonia level reading: 0.5 ppm</td>
+                  <td><span class="status scheduled">Scheduled</span></td>
+                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
                 </tr>
               </tbody>
             </table>
           </div>
         </section>
       </div>
-      
-     <!--orders-->
-      <div id="orders" class="page-section">
-        <div class="top-bar"><h1>Orders</h1></div>
-        <p>This is the Orders page content.</p>
-      </div>
-    
-      <!--products-->
-      <div id="products" class="page-section">
-        <div class="top-bar"><h1>Products</h1></div>
-        <p>This is the Products page content.</p>
-      </div>
-
-      <!--customers-->
-      <div id="customers" class="page-section">
-        <div class="top-bar"><h1>Customers</h1></div>
-        <p>This is the Customers page content.</p>
-      </div>
-
-      <!--reports-->
-      <div id="reports" class="page-section">
-        <div class="top-bar"><h1>Reports</h1></div>
-        <p>This is the Reports page content.</p>
-      </div>
-
-      <!--integrations-->
-      <div id="integrations" class="page-section">
-        <div class="top-bar"><h1>Integrations</h1></div>
-        <p>This is the Integrations page content.</p>
-      </div>
-
-
-      <!--current month-->
-      <div id="current-month" class="page-section">
-        <div class="top-bar"><h1>Current month</h1></div>
-        <p>This is the Current month page content.</p>
-      </div>
-
-      <!--last quarter-->
-      <div id="last-quarter" class="page-section">
-        <div class="top-bar"><h1>Last quarter</h1></div>
-        <p>This is the Last quarter page content.</p>
-      </div>
-
-      <!--social-->
-      <div id="social-engagement" class="page-section">
-        <div class="top-bar"><h1>Social engagement</h1></div>
-        <p>This is the Social engagement page content.</p>
-      </div>
-
-      <!--year end sale-->
-      <div id="year-end-sale" class="page-section">
-        <div class="top-bar"><h1>Year-end sale</h1></div>
-        <p>This is the Year-end sale page content.</p>
-      </div>
-
-      <!--settings-->
-      <div id="settings" class="page-section">
-        <div class="top-bar"><h1>Settings</h1></div>
-        <p>This is the Settings page content.</p>
-      </div>
-
-      <!--sign-out-->
-      <div id="sign-out" class="page-section">
-        <div class="top-bar"><h1>Sign out</h1></div>
-        <p>This is the Sign out page content.</p>
-      </div>
-
-
     </main>
+  </div>
 
-  
+  <!-- Data Entry Modal -->
+  <div id="dataEntryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Measurement Data</h3>
+        <button class="close-button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="dataEntryForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="currentDateTime">Date & Time:</label>
+              <input type="text" id="currentDateTime" readonly>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="temperature">Temperature (°C):</label>
+              <input type="number" id="temperature" step="0.1" min="0" max="50" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="humidity">Humidity (%):</label>
+              <input type="number" id="humidity" step="0.1" min="0" max="100" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="co2">CO₂ (ppm):</label>
+              <input type="number" id="co2" step="1" min="0" max="5000" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="ammonia">Ammonia (ppm):</label>
+              <input type="number" id="ammonia" step="0.01" min="0" max="100" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="ph">pH:</label>
+              <input type="number" id="ph" step="0.01" min="0" max="14" required>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="cancel-button">Cancel</button>
+            <button type="submit" class="submit-button"><i class='bx bx-save'></i> Save Data</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <script src="dashboard.js"></script>
-  
 </body>
 </html>
