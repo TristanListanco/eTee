@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+      <!-- ang sidebar -->
+      <aside class="w-64 bg-white p-6 border-r">
+        <div class="text-xl font-bold mb-6">Smart Chicken Coop IoT Dashboard</div>
+        <nav class="space-y-2">
+          <a href="#" class="block">Dashboard</a>
+          <a href="#" class="block">Orders</a>
+          <a href="#" class="block">Products</a>
+          <a href="#" class="block">Customers</a>
+          <a href="#" class="block">Reports</a>
+          <a href="#" class="block">Integrations</a>
+        </nav>
+        <div class="mt-6 text-sm text-gray-500">SAVED REPORTS</div>
+        <nav class="mt-2 space-y-1 text-sm">
+          <a href="#" class="block">Current month</a>
+          <a href="#" class="block">Last quarter</a>
+          <a href="#" class="block">Social engagement</a>
+          <a href="#" class="block">Year-end sale</a>
+        </nav>
+        <div class="mt-6">
+          <a href="#" class="block text-sm ">Settings</a>
+          <a href="#" class="block text-sm ">Sign out</a>
+        </div>
+      </aside>
+  
+      <!-- home main section ni -->
+      <main class="flex-1 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h1 class="text-2xl font-bold">Dashboard</h1>
+          <div class="space-x-2">
+            <button class="px-4 py-1 border rounded text-sm">Share</button>
+            <button class="px-4 py-1 border rounded text-sm">Export</button>
+            <select class="px-2 py-1 border rounded text-sm">
+              <option>This week</option>
+            </select>
+          </div>
+        </div>
+  
+        <!-- ang chart diri-->
+        <div class="bg-white p-6 rounded-lg shadow mb-6">
+          <div class="h-48 flex items-center justify-center text-gray-400">
+            [ Chart Goes Here ]
+          </div>
+        </div>
+  
+        <!-- table sa ubos ni-->
+        <section>
+          <h2 class="text-xl font-semibold mb-4">Section title</h2>
+          <div class="overflow-auto">
+            <table class="min-w-full bg-white rounded shadow">
+              <thead>
+                <tr class="bg-gray-100 text-left">
+                  <th class="py-2 px-4">Header</th>
+                  <th class="py-2 px-4">Header</th>
+                  <th class="py-2 px-4">Header</th>
+                  <th class="py-2 px-4">Header</th>
+                </tr>
+              </thead>
+              <tbody class="text-sm">
+                <tr class="border-t">
+                  <td class="py-2 px-4">random</td>
+                  <td class="py-2 px-4">data</td>
+                  <td class="py-2 px-4">placeholder</td>
+                  <td class="py-2 px-4">text</td>
+                </tr>
+                <tr class="border-t">
+                  <td class="py-2 px-4">placeholder</td>
+                  <td class="py-2 px-4">irrelevant</td>
+                  <td class="py-2 px-4">visual</td>
+                  <td class="py-2 px-4">layout</td>
+                </tr>
+                <tr class="border-t">
+                  <td class="py-2 px-4">rich</td>
+                  <td class="py-2 px-4">tabular</td>
+                  <td class="py-2 px-4">illustrative</td>
+                  <td class="py-2 px-4">data</td>
+                </tr>
+                <tr class="border-t">
+                  <td class="py-2 px-4">information</td>
+                  <td class="py-2 px-4">placeholder</td>
+                  <td class="py-2 px-4">layout</td>
+                  <td class="py-2 px-4">dashboard</td>
+                </tr>
+                <tr class="border-t">
+                  <td class="py-2 px-4">text</td>
+                  <td class="py-2 px-4">irrelevant</td>
+                  <td class="py-2 px-4">text</td>
+                  <td class="py-2 px-4">placeholder</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+  </html>

@@ -1,0 +1,233 @@
+/* styles.css */
+
+/* color wheel sa atoa site */
+:root {
+    --text-color: #648acc; 
+    --background-color: #1e2328;
+    --background-color2: #f5b301;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background-color: var(--background-color);
+    color: #1f2937;
+  }
+  
+  .container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .sidebar {
+    width: 185px;
+    background-color: var(--background-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .company-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 24px;
+  }
+
+  .admin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-color); 
+    margin-bottom: 24px;
+  }
+  
+  .admin img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    transform: scale(1.3);
+    margin-bottom: 8px;
+  }
+  
+  .admin span {
+    font-size: 14px;
+    color: #FFF;
+    margin-top: 20px;
+  }
+  
+  .admin p {
+    font-size: 14px;
+    color: #fff;
+    text-decoration: none;
+    margin-top: 4px;
+  }
+  
+  .admin a {
+    font-size: 14px;
+    color: var(--text-color);
+    text-decoration: none;
+    margin-bottom: 2px;
+  }
+  
+  .admin a:hover {
+    text-decoration: underline;
+  }
+  
+  .nav a::before,
+  .saved-reports a::before,
+  .settings a::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--background-color2);
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.5s ease;
+  }
+  
+  .nav a:hover::before,
+  .saved-reports a:hover::before,
+  .settings a:hover::before {
+    opacity: 1;
+  }
+   
+  .nav a,
+.saved-reports a,
+.settings a {
+  position: relative;
+  display: block;
+  color: var(--text-color);
+  margin-bottom: 12px;
+  margin-left: 2px;
+  background-color: transparent;
+  text-decoration: none;
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  overflow: hidden;
+  z-index: 1;
+}
+
+  .nav a.active,
+  .nav a:hover,
+  .saved-reports a:hover,
+  .settings a:hover {
+    color: black;
+    background-color: var(--background-color2);
+  }
+  
+  .report-title {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 12px;
+  }
+  
+  .sign-out {
+    color: #f87171;
+    margin-top: 12px;
+  }
+  
+  .main-content {
+    flex-grow: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background-color: #f3f4f6;
+  }
+  
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  
+  .top-bar h1 {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .actions button,
+  .actions select {
+    margin-left: 8px;
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .chart {
+    background-color: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+  }
+  
+  .chart-placeholder {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 16px;
+    border: 2px dashed #d1d5db;
+    border-radius: 4px;
+  }
+  
+  .data-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  thead {
+    background-color: #f3f4f6;
+  }
+  
+  th,
+  td {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 14px;
+  }
+  
+  tbody tr:not(:last-child) {
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .page-section {
+    display: none;
+    width: 100%;
+  }
+  
+  .page-section.active {
+    display: block;
+  }
+
+  
+  
