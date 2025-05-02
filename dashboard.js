@@ -164,7 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
         humidity,
         co2,
         ammonia,
-      
       };
       
       // Save to local storage
@@ -235,13 +234,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add record to table
     updateActivityTable(measurement);
     
-    // Update chart if present
-    updateChartDisplay(chartDataSelector ? chartDataSelector.value : 'temperature');
   }
   
-  // Function to add a new row to the activity table
-  // Enhanced table functionality for Recent Activities
-
 // Function to update activity table with new data
 function updateActivityTable(measurement) {
   const tableBody = document.querySelector('tbody');
@@ -469,22 +463,17 @@ function showDetailModal(date, activity, value, status, sensorType) {
     </div>
   `;
   
-  modalBody.appendChild(chartSection);
-  
+
   // Add actions buttons
   const actionsSection = document.createElement('div');
   actionsSection.className = 'detail-actions';
   
   const exportButton = document.createElement('button');
   exportButton.className = 'action-button small';
-  exportButton.innerHTML = '<i class="bx bx-export"></i> Export Data';
   
-  const printButton = document.createElement('button');
-  printButton.className = 'action-button small secondary';
-  printButton.innerHTML = '<i class="bx bx-printer"></i> Print Report';
+
   
-  actionsSection.appendChild(exportButton);
-  actionsSection.appendChild(printButton);
+ 
   modalBody.appendChild(actionsSection);
   
   // Assemble modal
@@ -505,8 +494,7 @@ function showDetailModal(date, activity, value, status, sensorType) {
     }
   });
   
-  // Show a notification
-  showNotification(`Viewing details for ${activity} from ${date}`, 'info');
+  
 }
 
 // Add this CSS to your stylesheet
@@ -528,26 +516,12 @@ const detailStyles = `
   color: var(--text-color);
 }
 
-.detail-chart {
-  margin-top: 20px;
-}
 
-.detail-chart h4 {
-  margin-bottom: 10px;
-  font-size: 0.9rem;
-  color: var(--text-color);
-}
 
 .chart-placeholder.mini {
   height: 150px;
 }
 
-.detail-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
 
 .action-button.small {
   padding: 8px 16px;
@@ -590,44 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
   
-  // Function to update the chart display
-  function updateChartDisplay(dataType) {
-    const chartPlaceholder = document.querySelector('.chart-placeholder');
-    if (!chartPlaceholder) return;
-    
-    let title, unit;
-    switch(dataType) {
-      case 'temperature':
-        title = 'Temperature';
-        unit = '°C';
-        break;
-     
-      case 'humidity':
-        title = 'Humidity';
-        unit = '%';
-        break;
-      case 'co2':
-        title = 'CO₂ Level';
-        unit = 'ppm';
-        break;
-      case 'ammonia':
-        title = 'Ammonia Level';
-        unit = 'ppm';
-        break;
-      default:
-        title = 'Temperature';
-        unit = '°C';
-    }
-    
-    // Update the chart placeholder text
-    chartPlaceholder.innerHTML = `
-      <i class='bx bx-line-chart'></i>
-      <p>${title} data will be displayed here (${unit})</p>
-    `;
-    
-    // In a real implementation, you would render the chart here
-    // using a library like Chart.js or similar
-  }
+  
   
   // Simple notification system
   function showNotification(message, type = 'info') {
@@ -742,7 +679,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', function() {
       const row = this.closest('tr');
       const activity = row.cells[1].textContent;
-      showNotification(`Viewing details for: ${activity}`, 'info');
     });
   });
 
