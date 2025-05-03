@@ -38,29 +38,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== Dashboard Specific Functionality =====
   
-  // Page sections management (if you have multiple sections)
-  const sections = document.querySelectorAll(".page-section");
-  
-  // Handle page section visibility
-  function showSection(sectionId) {
-    sections.forEach(section => {
-      section.classList.remove("active");
-    });
-    const targetSection = document.getElementById(sectionId);
-    if (targetSection) {
-      targetSection.classList.add("active");
+  // Function to set zero values
+  function setZeroValues() {
+    // Set zero values for cards
+    const temperatureValue = document.querySelector('.card:nth-child(1) .card-value');
+    if (temperatureValue) {
+      temperatureValue.textContent = '0°C';
+    }
+    
+    const humidityValue = document.querySelector('.humidity-value');
+    if (humidityValue) {
+      humidityValue.textContent = '0%';
+    }
+    
+    const co2Value = document.querySelector('.co2-value');
+    if (co2Value) {
+      co2Value.textContent = '0 ppm';
+    }
+    
+    const ammoniaValue = document.querySelector('.ammonia-value');
+    if (ammoniaValue) {
+      ammoniaValue.textContent = '0 ppm';
+    }
+    
+    // Set empty state for table
+    const tableBody = document.querySelector('tbody');
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr id="emptyStateRow">
+          <td colspan="5" style="text-align: center; padding: 2rem;">
+            <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+            <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+          </td>
+        </tr>
+      `;
     }
   }
 
   // ===== Sensor Dropdown Filtering =====
   const sensorSelector = document.getElementById('sensorSelector');
-  const tableRows = document.querySelectorAll('tbody tr');
   
   if (sensorSelector) {
     sensorSelector.addEventListener('change', () => {
       const selectedSensor = sensorSelector.value;
+      const allRows = document.querySelectorAll('tbody tr:not(#emptyStateRow)');
       
-      tableRows.forEach(row => {
+      allRows.forEach(row => {
         if (selectedSensor === 'all' || row.dataset.sensor === selectedSensor) {
           row.style.display = '';
         } else {
@@ -69,32 +92,23 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   }
-  
+
   // Chart data selector
   const chartDataSelector = document.getElementById('chartDataSelector');
   if (chartDataSelector) {
     chartDataSelector.addEventListener('change', () => {
-      showNotification(`Chart updated to show ${chartDataSelector.options[chartDataSelector.selectedIndex].text} data`, 'info');
       updateChartDisplay(chartDataSelector.value);
     });
   }
 
   // ===== Data Entry Functionality =====
-  
-  // Get elements
   const addDataBtn = document.getElementById('addDataBtn');
   const dataEntryModal = document.getElementById('dataEntryModal');
   const dataEntryForm = document.getElementById('dataEntryForm');
   const currentDateTimeField = document.getElementById('currentDateTime');
   
-  // Initialize measurements data storage if it doesn't exist
-  if (!localStorage.getItem('etee_measurements')) {
-    localStorage.setItem('etee_measurements', JSON.stringify([]));
-  }
-  
   // Function to open data entry modal
   function openDataModal() {
-    // Set current date and time
     const now = new Date();
     const formattedDateTime = now.toLocaleString('en-US', {
       year: 'numeric',
@@ -107,10 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     currentDateTimeField.value = formattedDateTime;
     
-    // Display the modal
     dataEntryModal.classList.add('active');
     
-    // Focus on the first input
     setTimeout(() => {
       const tempInput = document.getElementById('temperature');
       if (tempInput) tempInput.focus();
@@ -124,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (dataEntryForm) dataEntryForm.reset();
     }, 300);
   }
-  
+
   // Add event listeners for data entry modal
   if (addDataBtn) {
     addDataBtn.addEventListener('click', openDataModal);
@@ -136,7 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const modal = this.closest('.modal');
       if (modal) {
         modal.classList.remove('active');
-        // Reset form if it exists in this modal
         const form = modal.querySelector('form');
         if (form) {
           setTimeout(() => form.reset(), 300);
@@ -151,7 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const modal = this.closest('.modal');
       if (modal) {
         modal.classList.remove('active');
-        // Reset form if it exists in this modal
         const form = modal.querySelector('form');
         if (form) {
           setTimeout(() => form.reset(), 300);
@@ -164,7 +174,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal')) {
       e.target.classList.remove('active');
-      // Reset form if it exists in this modal
       const form = e.target.querySelector('form');
       if (form) {
         setTimeout(() => form.reset(), 300);
@@ -177,16 +186,14 @@ document.addEventListener("DOMContentLoaded", () => {
     dataEntryForm.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      // Get form values
       const dateTime = currentDateTimeField.value;
       const temperature = parseFloat(document.getElementById('temperature').value);
       const humidity = parseFloat(document.getElementById('humidity').value);
       const co2 = parseInt(document.getElementById('co2').value);
       const ammonia = parseFloat(document.getElementById('ammonia').value);
       
-      // Create new measurement object
       const newMeasurement = {
-        id: Date.now(), // Unique identifier
+        id: Date.now(),
         dateTime,
         timestamp: new Date().getTime(),
         temperature,
@@ -195,20 +202,14 @@ document.addEventListener("DOMContentLoaded", () => {
         ammonia,
       };
       
-      // Save to local storage
-      saveMeasurement(newMeasurement);
-      
-      // Show success animation
       const submitBtn = dataEntryForm.querySelector('.submit-button');
       if (submitBtn) {
         submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
         submitBtn.classList.add('success-animation');
       }
       
-      // Update dashboard with new data
       updateDashboardData(newMeasurement);
       
-      // Reset and close after animation
       setTimeout(() => {
         if (submitBtn) {
           submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
@@ -220,20 +221,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // Function to save measurement to local storage
-  function saveMeasurement(measurement) {
-    // Get existing data
-    const measurements = JSON.parse(localStorage.getItem('etee_measurements')) || [];
-    
-    // Add new measurement
-    measurements.push(measurement);
-    
-    // Save back to localStorage
-    localStorage.setItem('etee_measurements', JSON.stringify(measurements));
-  }
-  
   // Function to update dashboard with new data
   function updateDashboardData(measurement) {
+    // Remove empty state row if it exists
+    const emptyStateRow = document.getElementById('emptyStateRow');
+    if (emptyStateRow) {
+      emptyStateRow.remove();
+    }
+
     // Update temperature card
     const temperatureValue = document.querySelector('.card:nth-child(1) .card-value');
     if (temperatureValue) {
@@ -267,7 +262,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const tableBody = document.querySelector('tbody');
     if (!tableBody) return;
     
-    // Format date and time for display
     const now = new Date(measurement.timestamp);
     const formattedDate = now.toLocaleDateString('en-US', { 
       month: 'short', 
@@ -281,7 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
       hour12: false
     });
     
-    // Define normal ranges for each parameter
     const normalRanges = {
       temperature: { min: 26.0, max: 29.0 },
       humidity: { min: 50, max: 70 },
@@ -289,7 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ammonia: { min: 0, max: 0.25 }
     };
     
-    // Check if each value is within normal range
     const isNormal = {
       temperature: measurement.temperature >= normalRanges.temperature.min && 
                    measurement.temperature <= normalRanges.temperature.max,
@@ -301,7 +293,6 @@ document.addEventListener("DOMContentLoaded", () => {
                measurement.ammonia <= normalRanges.ammonia.max
     };
     
-    // Create a new row for each measurement type
     const sensors = [
       { 
         type: 'temperature', 
@@ -329,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     ];
     
-    // Add the most recent reading to the top
     sensors.forEach(sensor => {
       const newRow = document.createElement('tr');
       newRow.dataset.sensor = sensor.type;
@@ -342,29 +332,15 @@ document.addEventListener("DOMContentLoaded", () => {
         <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
       `;
       
-      // Insert at the beginning of the table
       if (tableBody.firstChild) {
         tableBody.insertBefore(newRow, tableBody.firstChild);
       } else {
         tableBody.appendChild(newRow);
       }
       
-      // Apply current filter
       const sensorSelector = document.getElementById('sensorSelector');
       if (sensorSelector && sensorSelector.value !== 'all' && newRow.dataset.sensor !== sensorSelector.value) {
         newRow.style.display = 'none';
-      }
-    });
-    
-    // Remove excess rows if needed (keep 5 per sensor type)
-    const sensorTypes = ['temperature', 'humidity', 'co2', 'ammonia'];
-    
-    sensorTypes.forEach(type => {
-      const rows = tableBody.querySelectorAll(`tr[data-sensor="${type}"]`);
-      if (rows.length > 5) {
-        for (let i = 5; i < rows.length; i++) {
-          tableBody.removeChild(rows[i]);
-        }
       }
     });
     
@@ -486,8 +462,6 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
     
-  
-    
     // Assemble modal
     modalContent.appendChild(modalHeader);
     modalContent.appendChild(modalBody);
@@ -509,7 +483,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Simple notification system
   function showNotification(message, type = 'info') {
-    // Check if notification container exists, create if not
     let notifContainer = document.querySelector('.notification-container');
     if (!notifContainer) {
       notifContainer = document.createElement('div');
@@ -517,11 +490,9 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.appendChild(notifContainer);
     }
     
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
     
-    // Determine title based on type
     let title;
     switch (type) {
       case 'success':
@@ -537,13 +508,11 @@ document.addEventListener("DOMContentLoaded", () => {
         title = 'Information';
     }
     
-    // Create icon based on type
     const icon = document.createElement('i');
     icon.className = type === 'success' ? 'bx bx-check-circle' : 
                      type === 'error' ? 'bx bx-error-circle' : 
                      type === 'warning' ? 'bx bx-error' : 'bx bx-info-circle';
     
-    // Create notification content
     const content = document.createElement('div');
     content.className = 'notification-content';
     
@@ -558,7 +527,6 @@ document.addEventListener("DOMContentLoaded", () => {
     content.appendChild(titleEl);
     content.appendChild(messageEl);
     
-    // Create close button
     const closeButton = document.createElement('button');
     closeButton.className = 'notification-close';
     closeButton.innerHTML = '<i class="bx bx-x"></i>';
@@ -571,15 +539,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 300);
     });
     
-    // Assemble notification
     notification.appendChild(icon);
     notification.appendChild(content);
     notification.appendChild(closeButton);
     
-    // Add to container
     notifContainer.appendChild(notification);
     
-    // Auto remove after 5 seconds
     setTimeout(() => {
       if (notification.parentElement) {
         notification.style.transform = 'translateX(120%)';
@@ -590,41 +555,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 300);
       }
     }, 5000);
-  }
-  
-  // Function to load and display recent measurements on page load
-  function loadRecentMeasurements() {
-    const measurements = JSON.parse(localStorage.getItem('etee_measurements')) || [];
-    
-    // Sort by timestamp descending (newest first)
-    measurements.sort((a, b) => b.timestamp - a.timestamp);
-    
-    // If there are measurements, update dashboard with most recent
-    if (measurements.length > 0) {
-      updateDashboardData(measurements[0]);
-    }
-  }
-  
-  // Enable escape key to close modals
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      const activeModals = document.querySelectorAll('.modal.active');
-      activeModals.forEach(modal => {
-        modal.classList.remove('active');
-        // Reset form if it exists in this modal
-        const form = modal.querySelector('form');
-        if (form) {
-          setTimeout(() => form.reset(), 300);
-        }
-      });
-    }
-  });
-
-  // Chart update function (placeholder)
-  function updateChartDisplay(dataType) {
-    // This is where you would update your chart based on the selected data type
-    console.log(`Updating chart to display ${dataType} data`);
-    // Implement chart update logic here
   }
   
   // ===== Profile Edit Functionality =====
@@ -712,22 +642,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // Initialize dashboard data
-  loadRecentMeasurements();
-  
-  // Add event listeners to existing view buttons
-  document.querySelectorAll('.view-btn').forEach(btn => {
-    if (!btn.hasAttribute('data-listener')) {
-      btn.setAttribute('data-listener', 'true');
-      btn.addEventListener('click', function() {
-        const row = this.closest('tr');
-        const date = row.cells[0].textContent;
-        const activity = row.cells[1].textContent;
-        const value = row.cells[2].textContent;
-        const status = row.querySelector('.status').textContent;
-        
-        showDetailModal(date, activity, value, status, row.dataset.sensor);
+  // Enable escape key to close modals
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const activeModals = document.querySelectorAll('.modal.active');
+      activeModals.forEach(modal => {
+        modal.classList.remove('active');
+        const form = modal.querySelector('form');
+        if (form) {
+          setTimeout(() => form.reset(), 300);
+        }
       });
     }
   });
+
+  // Chart update function (placeholder)
+  function updateChartDisplay(dataType) {
+    console.log(`Updating chart to display ${dataType} data`);
+    // Implement chart update logic here
+  }
+  
+  // Initialize dashboard with zero values
+  setZeroValues();
 });

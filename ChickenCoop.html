@@ -1,0 +1,356 @@
+<div class="card-value amm<!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Chicken Coop Management - ETee</title>
+      <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
+      
+      <!-- Sidebar styles -->
+      <link rel="stylesheet" href="sidebar.css">
+      <!-- Dashboard styles -->
+      <link rel="stylesheet" href="Dashboard.css">
+      <!-- ChickenCoop specific styles -->
+      <link rel="stylesheet" href="chickencoop.css">
+    </head>
+    <body>
+      <div class="container">
+        <!-- Mobile sidebar toggle -->
+        <button class="mobile-toggle" id="sidebarToggle">
+          <i class='bx bx-menu'></i>
+        </button>
+        
+        <aside class="sidebar" id="sidebar">
+          <div class="company-name">ETee</div>
+          <div class="admin" id="adminProfile"> 
+            <img src="admin.png" alt="Admin" id="adminImage">
+            <span id="adminName">Dja-ver Q. Hassan</span>
+            <p id="adminRole">Admin</p>
+            <a href="#email" id="adminEmail">etee@gmail.com</a>
+            <div class="edit-overlay">
+              <i class='bx bx-edit'></i>
+              <span>Edit Profile</span>
+            </div>
+          </div>
+    
+          <nav class="nav" id="sidebarNav">
+            <!-- Navigation items will be injected here dynamically -->
+          </nav>
+        </aside>
+    
+        <!-- Main Content -->
+        <main class="main-content">
+          <div id="coopSetup" class="page-section active">
+            <div class="top-bar">
+              <h1><i class='bx bxs-building-house'></i>Chicken Coop Management</h1>
+              <div class="actions">
+                <button id="addCoopBtn" class="action-button">
+                  <i class='bx bx-plus-circle'></i> Add Chicken Coop
+                </button>
+              </div>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state">
+              <i class='bx bxs-building-house'></i>
+              <h2>No Chicken Coops Yet</h2>
+              <p>Start by adding your first chicken coop to begin monitoring.</p>
+              <button class="action-button empty-state-btn">
+                <i class='bx bx-plus-circle'></i> Add Your First Coop
+              </button>
+            </div>
+            
+            <!-- Coops Grid -->
+            <div id="coopsGrid" class="coops-grid" style="display: none;">
+              <!-- Coop cards will be dynamically added here -->
+            </div>
+          </div>
+    
+          <!-- Dashboard Section (Hidden initially) -->
+          <div id="dashboard" class="page-section">
+            <div class="top-bar">
+              <h1><i class='bx bxs-dashboard'></i>Dashboard</h1>
+              <div class="actions">
+                <button id="addDataBtn" class="action-button">
+                  <i class='bx bx-plus-circle'></i> Add Data
+                </button>
+              </div>
+            </div>
+            
+            <!-- Cards Grid -->
+            <div class="cards-grid">
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <i class='bx bxs-hot'></i>Temperature
+                  </div>
+                </div>
+                <div class="card-value temperature-value">0°C</div>
+                <div class="card-description">Water temperature measurement</div>
+              </div>
+              
+              <div class="card humidity-card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <i class='bx bxs-droplet-half'></i>Humidity
+                  </div>
+                </div>
+                <div class="card-value humidity-value">0%</div>
+                <div class="card-description">Relative humidity measurement</div>
+              </div>
+              
+              <div class="card co2-card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <i class='bx bxs-cloud'></i>CO₂ Level
+                  </div>
+                </div>
+                <div class="card-value co2-value">0 ppm</div>
+                <div class="card-description">Carbon dioxide concentration</div>
+              </div>
+              
+              <div class="card ammonia-card">
+                <div class="card-header">
+                  <div class="card-title">
+                    <i class='bx bxs-flask'></i>Ammonia Level
+                  </div>
+                </div>
+                <div class="card-value ammonia-value">0 ppm</div>
+                <div class="card-description">Ammonia concentration</div>
+              </div>
+            </div>
+      
+            <!-- Chart -->
+            <div class="chart-container">
+              <div class="chart-header">
+                <div class="chart-title">Data Visualization</div>
+                <div class="chart-controls">
+                  <select id="chartDataSelector">
+                    <option value="temperature">Temperature</option>
+                    <option value="humidity">Humidity</option>
+                    <option value="co2">CO₂ Level</option>
+                    <option value="ammonia">Ammonia Level</option>
+                  </select>
+                </div>
+              </div>
+              <div class="chart">
+                <div class="chart-placeholder">
+                  <i class='bx bx-line-chart'></i>
+                  <p>Chart data will be displayed here</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Sensor Readings Section -->
+            <section class="data-section">
+              <div class="section-header">
+                <h2><i class='bx bx-table'></i>Sensor Readings</h2>
+                <div class="sensor-selector">
+                  <label for="sensorSelector">View readings for:</label>
+                  <select id="sensorSelector">
+                    <option value="all">All Sensors</option>
+                    <option value="temperature" selected>Temperature</option>
+                    <option value="humidity">Humidity</option>
+                    <option value="co2">CO₂ Level</option>
+                    <option value="ammonia">Ammonia Level</option>
+                  </select>
+                </div>
+              </div>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date & Time</th>
+                      <th>Reading ID</th>
+                      <th>Value</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sensorReadingsBody">
+                    <!-- Empty state row -->
+                    <tr id="emptyStateRow">
+                      <td colspan="5" style="text-align: center; padding: 2rem;">
+                        <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+                        <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    
+      <!-- Add Coop Modal -->
+      <div id="addCoopModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Add New Chicken Coop</h3>
+            <button class="close-button">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="addCoopForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="coopLocation">Location</label>
+                  <input type="text" id="coopLocation" placeholder="Enter coop location" required>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="coopSize">Size (sq ft)</label>
+                  <input type="number" id="coopSize" min="1" placeholder="Enter coop size" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="coopCapacity">Capacity (birds)</label>
+                  <input type="number" id="coopCapacity" min="1" placeholder="Enter bird capacity" required>
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="cancel-button">Cancel</button>
+                <button type="submit" class="submit-button">
+                  <i class='bx bx-save'></i> Save Coop
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    
+      <!-- Data Entry Modal -->
+      <div id="dataEntryModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Add New Measurement Data</h3>
+            <button class="close-button">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="dataEntryForm">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="currentDateTime">Date & Time:</label>
+                  <input type="text" id="currentDateTime" readonly>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="temperature">Temperature (°C):</label>
+                  <input type="number" id="temperature" step="0.1" min="0" max="50" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="humidity">Humidity (%):</label>
+                  <input type="number" id="humidity" step="0.1" min="0" max="100" required>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="co2">CO₂ (ppm):</label>
+                  <input type="number" id="co2" step="1" min="0" max="5000" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="ammonia">Ammonia (ppm):</label>
+                  <input type="number" id="ammonia" step="0.01" min="0" max="100" required>
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="cancel-button">Cancel</button>
+                <button type="submit" class="submit-button"><i class='bx bx-save'></i> Save Data</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    
+      <!-- Profile Edit Modal -->
+      <div id="profileEditModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Edit Profile</h3>
+            <button class="close-button">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form id="profileEditForm">
+              <div class="profile-image-section">
+                <img src="admin.png" alt="Profile" id="profilePreview">
+                <input type="file" id="profileImage" accept="image/*" style="display: none;">
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profileName">Name:</label>
+                  <input type="text" id="profileName" required>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profileEmail">Email:</label>
+                  <input type="email" id="profileEmail" required>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profilePhone">Phone Number:</label>
+                  <input type="tel" id="profilePhone">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profileAddress">Address:</label>
+                  <input type="text" id="profileAddress">
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="dateRegistered">Date Registered:</label>
+                  <input type="text" id="dateRegistered" readonly>
+                </div>
+                
+                <div class="form-group">
+                  <label for="userRole">User Role:</label>
+                  <select id="userRole">
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Operator">Operator</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="userID">User ID:</label>
+                  <input type="text" id="userID" readonly>
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="cancel-button">Cancel</button>
+                <button type="submit" class="submit-button"><i class='bx bx-save'></i> Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    
+      <!-- Sidebar JavaScript -->
+      <script src="sidebar.js"></script>
+      <!-- ChickenCoop JavaScript -->
+      <script src="chickencoop.js"></script>
+    </body>
+    </html>

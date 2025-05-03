@@ -49,16 +49,7 @@
             <button id="addDataBtn" class="action-button">
               <i class='bx bx-plus-circle'></i> Add Data
             </button>          
-            
-            <button>
-              <i class='bx bx-export'></i>Export
-            </button>
-            <select>
-              <option>This week</option>
-              <option>This month</option>
-              <option>This year</option>
-              <option>All time</option>
-            </select>
+         
           </div>
         </div>
         
@@ -70,7 +61,7 @@
                 <i class='bx bxs-hot'></i>Temperature
               </div>
             </div>
-            <div class="card-value">28.7°C</div>
+            <div class="card-value">0°C</div>
             <div class="card-description">Water temperature measurement</div>
           </div>
           
@@ -153,33 +144,11 @@
                 </tr>
               </thead>
               <tbody>
-                <tr data-sensor="temperature">
-                  <td>May 2, 2025 • 14:30</td>
-                  <td>Temperature reading</td>
-                  <td>28.7°C</td>
-                  <td><span class="status normal">Normal</span></td>
-                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
-                </tr>
-                <tr data-sensor="humidity">
-                  <td>April 30, 2025 • 09:15</td>
-                  <td>Humidity reading</td>
-                  <td>65%</td>
-                  <td><span class="status normal">Normal</span></td>
-                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
-                </tr>
-                <tr data-sensor="co2">
-                  <td>April 29, 2025 • 11:20</td>
-                  <td>CO₂ level reading</td>
-                  <td>458 ppm</td>
-                  <td><span class="status normal">Normal</span></td>
-                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
-                </tr>
-                <tr data-sensor="ammonia">
-                  <td>April 28, 2025 • 13:05</td>
-                  <td>Ammonia level reading</td>
-                  <td>0.5 ppm</td>
-                  <td><span class="status abnormal">Abnormal</span></td>
-                  <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
+                <tr id="emptyStateRow">
+                  <td colspan="5" style="text-align: center; padding: 2rem;">
+                    <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+                    <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+                  </td>
                 </tr>
               </tbody>
             </table>

@@ -40,12 +40,12 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // Here you would normally authenticate the user
-      // For demo purposes, we'll just redirect to the dashboard
+      // For demo purposes, we'll just redirect to the chicken coop page
       showSuccess();
       
-      // Redirect after a short delay
+      // Redirect after a short delay - CHANGED FROM Dashboard.html TO ChickenCoop.html
       setTimeout(() => {
-        window.location.href = 'Dashboard.html';
+        window.location.href = 'ChickenCoop.html';
       }, 1000);
     });
   }
@@ -97,9 +97,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // Here you would normally register the user on the server
       showSuccess('Registration successful!');
       
-      // Redirect after a short delay
+      // Redirect after a short delay - CHANGED FROM Dashboard.html TO ChickenCoop.html
       setTimeout(() => {
-        window.location.href = 'Dashboard.html';
+        window.location.href = 'ChickenCoop.html';
       }, 1000);
     });
   }
