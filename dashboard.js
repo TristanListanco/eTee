@@ -1,50 +1,56 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Original navigation functionality
-  const navLinks = document.querySelectorAll(".nav a");
-  const sections = document.querySelectorAll(".page-section");
-
-  navLinks.forEach(link => {
-    link.addEventListener("click", e => {
-      e.preventDefault();
-
-      // Remove active class from all links
-      navLinks.forEach(l => l.classList.remove("active"));
-      link.classList.add("active");
-
-      // Hide all sections
-      sections.forEach(section => {
-        section.classList.remove("active");
-      });
-
-      // Get the target section from href and show it
-      const targetId = link.getAttribute("href").substring(1);
-      const targetSection = document.getElementById(targetId);
-      if (targetSection) {
-        targetSection.classList.add("active");
+  // Initialize sidebar component
+  const sidebar = new Sidebar({
+    containerId: 'sidebar',
+    companyName: 'ETee',
+    navItems: [
+      {
+        text: 'Dashboard',
+        icon: 'bx bxs-dashboard',
+        href: '#dashboard',
+        active: true
+      },
+      {
+        text: 'Sign out',
+        icon: 'bx bxs-log-out',
+        href: '#sign-out',
+        class: 'sign-out'
       }
-    });
-  });
-
-  // Mobile sidebar toggle
-  const sidebarToggle = document.getElementById('sidebarToggle');
-  const sidebar = document.querySelector('.sidebar');
-  
-  if (sidebarToggle && sidebar) {
-    sidebarToggle.addEventListener('click', () => {
-      sidebar.classList.toggle('active');
-    });
-  }
-  
-  // Close mobile sidebar when clicking outside
-  document.addEventListener('click', (e) => {
-    if (window.innerWidth <= 768 && 
-        sidebar && 
-        !sidebar.contains(e.target) && 
-        sidebarToggle && 
-        e.target !== sidebarToggle) {
-      sidebar.classList.remove('active');
+    ],
+    profile: {
+      name: "Dja-ver Q. Hassan",
+      role: "Admin",
+      email: "etee@gmail.com",
+      image: "admin.png"
+    },
+    onProfileEdit: function() {
+      openProfileModal();
+    },
+    onNavItemClick: function(e, item) {
+      if (item.href === '#sign-out') {
+        e.preventDefault();
+        if (confirm('Are you sure you want to sign out?')) {
+          window.location.href = 'signin.html';
+        }
+      }
     }
   });
+
+  // ===== Dashboard Specific Functionality =====
+  
+  // Page sections management (if you have multiple sections)
+  const sections = document.querySelectorAll(".page-section");
+  
+  // Handle page section visibility
+  function showSection(sectionId) {
+    sections.forEach(section => {
+      section.classList.remove("active");
+    });
+    const targetSection = document.getElementById(sectionId);
+    if (targetSection) {
+      targetSection.classList.add("active");
+    }
+  }
 
   // ===== Sensor Dropdown Filtering =====
   const sensorSelector = document.getElementById('sensorSelector');
@@ -68,8 +74,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const chartDataSelector = document.getElementById('chartDataSelector');
   if (chartDataSelector) {
     chartDataSelector.addEventListener('change', () => {
-      // This would normally update the chart data
-      // For now, we'll just show a notification
       showNotification(`Chart updated to show ${chartDataSelector.options[chartDataSelector.selectedIndex].text} data`, 'info');
       updateChartDisplay(chartDataSelector.value);
     });
@@ -80,8 +84,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // Get elements
   const addDataBtn = document.getElementById('addDataBtn');
   const dataEntryModal = document.getElementById('dataEntryModal');
-  const closeBtn = document.querySelector('.close-button');
-  const cancelBtn = document.querySelector('.cancel-button');
   const dataEntryForm = document.getElementById('dataEntryForm');
   const currentDateTimeField = document.getElementById('currentDateTime');
   
@@ -90,8 +92,8 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem('etee_measurements', JSON.stringify([]));
   }
   
-  // Function to open modal
-  function openModal() {
+  // Function to open data entry modal
+  function openDataModal() {
     // Set current date and time
     const now = new Date();
     const formattedDateTime = now.toLocaleString('en-US', {
@@ -115,8 +117,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
   }
   
-  // Function to close modal
-  function closeModal() {
+  // Function to close data entry modal
+  function closeDataModal() {
     dataEntryModal.classList.remove('active');
     setTimeout(() => {
       if (dataEntryForm) dataEntryForm.reset();
@@ -125,25 +127,52 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Add event listeners for data entry modal
   if (addDataBtn) {
-    addDataBtn.addEventListener('click', openModal);
+    addDataBtn.addEventListener('click', openDataModal);
   }
   
-  if (closeBtn) {
-    closeBtn.addEventListener('click', closeModal);
-  }
+  // Close button event listeners for all modals
+  document.querySelectorAll('.close-button').forEach(button => {
+    button.addEventListener('click', function() {
+      const modal = this.closest('.modal');
+      if (modal) {
+        modal.classList.remove('active');
+        // Reset form if it exists in this modal
+        const form = modal.querySelector('form');
+        if (form) {
+          setTimeout(() => form.reset(), 300);
+        }
+      }
+    });
+  });
   
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', closeModal);
-  }
+  // Cancel button event listeners
+  document.querySelectorAll('.cancel-button').forEach(button => {
+    button.addEventListener('click', function() {
+      const modal = this.closest('.modal');
+      if (modal) {
+        modal.classList.remove('active');
+        // Reset form if it exists in this modal
+        const form = modal.querySelector('form');
+        if (form) {
+          setTimeout(() => form.reset(), 300);
+        }
+      }
+    });
+  });
   
   // Close modal when clicking outside
   window.addEventListener('click', (e) => {
-    if (e.target === dataEntryModal) {
-      closeModal();
+    if (e.target.classList.contains('modal')) {
+      e.target.classList.remove('active');
+      // Reset form if it exists in this modal
+      const form = e.target.querySelector('form');
+      if (form) {
+        setTimeout(() => form.reset(), 300);
+      }
     }
   });
   
-  // Form submission handler
+  // Data entry form submission handler
   if (dataEntryForm) {
     dataEntryForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -170,7 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
       saveMeasurement(newMeasurement);
       
       // Show success animation
-      const submitBtn = document.querySelector('.submit-button');
+      const submitBtn = dataEntryForm.querySelector('.submit-button');
       if (submitBtn) {
         submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
         submitBtn.classList.add('success-animation');
@@ -185,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
           submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
           submitBtn.classList.remove('success-animation');
         }
-        closeModal();
+        closeDataModal();
         showNotification('New measurement data added successfully!', 'success');
       }, 1500);
     });
@@ -457,14 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
     
-    // Add actions buttons
-    const actionsSection = document.createElement('div');
-    actionsSection.className = 'detail-actions';
-    
-    const exportButton = document.createElement('button');
-    exportButton.className = 'action-button small';
-    
-    modalBody.appendChild(actionsSection);
+    modalBody.appendChild(chartSection);
     
     // Assemble modal
     modalContent.appendChild(modalHeader);
@@ -583,222 +605,117 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  // Enable escape key to close modal
+  // Enable escape key to close modals
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && dataEntryModal && dataEntryModal.classList.contains('active')) {
-      closeModal();
+    if (e.key === 'Escape') {
+      const activeModals = document.querySelectorAll('.modal.active');
+      activeModals.forEach(modal => {
+        modal.classList.remove('active');
+        // Reset form if it exists in this modal
+        const form = modal.querySelector('form');
+        if (form) {
+          setTimeout(() => form.reset(), 300);
+        }
+      });
     }
   });
-  
-  // Initialize dashboard data
-  loadRecentMeasurements();
-  
-  // Add event listeners to view buttons
-  document.querySelectorAll('.view-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const row = this.closest('tr');
-      const activity = row.cells[1].textContent;
-    });
-  });
 
+  // Chart update function (placeholder)
+  function updateChartDisplay(dataType) {
+    // This is where you would update your chart based on the selected data type
+    console.log(`Updating chart to display ${dataType} data`);
+    // Implement chart update logic here
+  }
+  
   // ===== Profile Edit Functionality =====
   
   // Profile Edit Elements
-  const adminProfile = document.getElementById('adminProfile');
   const profileEditModal = document.getElementById('profileEditModal');
   const profileEditForm = document.getElementById('profileEditForm');
   const profileImageInput = document.getElementById('profileImage');
   const profilePreview = document.getElementById('profilePreview');
-  const adminImage = document.getElementById('adminImage');
   
-  // Initialize user profile data
-  const userProfileData = {
-    name: "Dja-ver Q. Hassan",
-    email: "etee@gmail.com",
-    phone: "+1234567890",
-    address: "123 Main Street, Anytown, USA",
-    dateRegistered: "January 1, 2024",
-    userRole: "Admin",
-    userID: "USR-001",
-    profileImage: "admin.png"
-  };
-  
-  // Save to localStorage if not exists
-  if (!localStorage.getItem('userProfile')) {
-    localStorage.setItem('userProfile', JSON.stringify(userProfileData));
-  }
-  
-  // Function to load profile data
-  function loadProfileData() {
-    const savedProfile = JSON.parse(localStorage.getItem('userProfile'));
-    if (savedProfile) {
-      // Update sidebar display
-      document.getElementById('adminName').textContent = savedProfile.name;
-      document.getElementById('adminRole').textContent = savedProfile.userRole;
-      document.getElementById('adminEmail').textContent = savedProfile.email;
-      document.getElementById('adminEmail').href = `mailto:${savedProfile.email}`;
-      
-      // Update admin image if it exists
-      if (savedProfile.profileImage) {
-        adminImage.src = savedProfile.profileImage;
-      }
-    }
-  }
-  
-  // Open profile edit modal
+  // Function to open profile edit modal
   function openProfileModal() {
     const savedProfile = JSON.parse(localStorage.getItem('userProfile'));
     
     // Populate form with current data
-    document.getElementById('profileName').value = savedProfile.name;
-    document.getElementById('profileEmail').value = savedProfile.email;
-    document.getElementById('profilePhone').value = savedProfile.phone;
-    document.getElementById('profileAddress').value = savedProfile.address;
-    document.getElementById('dateRegistered').value = savedProfile.dateRegistered;
-    document.getElementById('userRole').value = savedProfile.userRole;
-    document.getElementById('userID').value = savedProfile.userID;
+    document.getElementById('profileName').value = savedProfile ? savedProfile.name : 'Dja-ver Q. Hassan';
+    document.getElementById('profileEmail').value = savedProfile ? savedProfile.email : 'etee@gmail.com';
+    document.getElementById('profilePhone').value = savedProfile ? savedProfile.phone : '+1234567890';
+    document.getElementById('profileAddress').value = savedProfile ? savedProfile.address : '123 Main Street, Anytown, USA';
+    document.getElementById('dateRegistered').value = savedProfile ? savedProfile.dateRegistered : 'January 1, 2024';
+    document.getElementById('userRole').value = savedProfile ? savedProfile.userRole : 'Admin';
+    document.getElementById('userID').value = savedProfile ? savedProfile.userID : 'USR-001';
     
     // Set profile image preview
-    profilePreview.src = savedProfile.profileImage || 'admin.png';
+    profilePreview.src = savedProfile && savedProfile.profileImage ? savedProfile.profileImage : 'admin.png';
     
     // Show modal
     profileEditModal.classList.add('active');
   }
   
-  // Close profile edit modal
-  function closeProfileModal() {
-    profileEditModal.classList.remove('active');
+  // Handle profile image change
+  if (profileImageInput) {
+    profileImageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          profilePreview.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
   }
   
-  // Handle profile image change
-  profileImageInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        profilePreview.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-  
   // Handle profile form submission
-  profileEditForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    
-    // Get form values
-    const updatedProfile = {
-      name: document.getElementById('profileName').value,
-      email: document.getElementById('profileEmail').value,
-      phone: document.getElementById('profilePhone').value,
-      address: document.getElementById('profileAddress').value,
-      dateRegistered: document.getElementById('dateRegistered').value,
-      userRole: document.getElementById('userRole').value,
-      userID: document.getElementById('userID').value,
-      profileImage: profilePreview.src
-    };
-    
-    // Save to localStorage
-    localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
-    
-    // Update UI
-    loadProfileData();
-    
-    // Show success animation
-    const submitBtn = profileEditForm.querySelector('.submit-button');
-    submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
-    submitBtn.classList.add('success-animation');
-    
-    // Close modal after animation
-    setTimeout(() => {
-      submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Changes';
-      submitBtn.classList.remove('success-animation');
-      closeProfileModal();
-      showNotification('Profile updated successfully!', 'success');
-    }, 1500);
-  });
+  if (profileEditForm) {
+    profileEditForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      // Get form values
+      const updatedProfile = {
+        name: document.getElementById('profileName').value,
+        email: document.getElementById('profileEmail').value,
+        phone: document.getElementById('profilePhone').value,
+        address: document.getElementById('profileAddress').value,
+        dateRegistered: document.getElementById('dateRegistered').value,
+        userRole: document.getElementById('userRole').value,
+        userID: document.getElementById('userID').value,
+        profileImage: profilePreview.src
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+      
+      // Update sidebar profile using the sidebar component
+      sidebar.setProfile({
+        name: updatedProfile.name,
+        role: updatedProfile.userRole,
+        email: updatedProfile.email,
+        image: updatedProfile.profileImage
+      });
+      
+      // Show success animation
+      const submitBtn = profileEditForm.querySelector('.submit-button');
+      submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
+      submitBtn.classList.add('success-animation');
+      
+      // Close modal after animation
+      setTimeout(() => {
+        submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Changes';
+        submitBtn.classList.remove('success-animation');
+        profileEditModal.classList.remove('active');
+        showNotification('Profile updated successfully!', 'success');
+      }, 1500);
+    });
+  }
   
-  // Event Listeners
-  const editOverlay = document.querySelector('.edit-overlay');
-  editOverlay.addEventListener('click', (e) => {
-    e.stopPropagation(); // Prevent event from bubbling to parent
-    openProfileModal();
-  });
+  // Initialize dashboard data
+  loadRecentMeasurements();
   
-  // Close button event listener
-  const closeButton = profileEditModal.querySelector('.close-button');
-  closeButton.addEventListener('click', closeProfileModal);
-  
-  // Cancel button event listener
-  const cancelButton = profileEditModal.querySelector('.cancel-button');
-  cancelButton.addEventListener('click', closeProfileModal);
-  
-  // Close modal when clicking outside
-  window.addEventListener('click', (e) => {
-    if (e.target === profileEditModal) {
-      closeProfileModal();
-    }
-  });
-  
-  // Close modal with Escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && profileEditModal.classList.contains('active')) {
-      closeProfileModal();
-    }
-  });
-  
-  // Load profile data on page load
-  loadProfileData();
-});
-
-// Add detail modal styles
-const detailStyles = `
-.detail-row {
-  display: flex;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.detail-label {
-  font-weight: 500;
-  width: 30%;
-  color: var(--text-light);
-}
-
-.detail-value {
-  width: 70%;
-  color: var(--text-color);
-}
-
-.chart-placeholder.mini {
-  height: 150px;
-}
-
-.action-button.small {
-  padding: 8px 16px;
-  font-size: 0.8rem;
-}
-
-.action-button.secondary {
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-}
-
-.action-button.secondary:hover {
-  background-color: var(--bg-light);
-  border-color: var(--text-color);
-}
-`;
-
-// Add styles to document
-const styleSheet = document.createElement("style");
-styleSheet.textContent = detailStyles;
-document.head.appendChild(styleSheet);
-
-// Initialize table view events
-document.addEventListener('DOMContentLoaded', () => {
-  // Add click events to existing view buttons
+  // Add event listeners to existing view buttons
   document.querySelectorAll('.view-btn').forEach(btn => {
     if (!btn.hasAttribute('data-listener')) {
       btn.setAttribute('data-listener', 'true');
