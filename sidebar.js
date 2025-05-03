@@ -1,4 +1,3 @@
-// sidebar.js - Reusable sidebar component logic
 class Sidebar {
   constructor(options = {}) {
     // Default options
@@ -42,10 +41,7 @@ class Sidebar {
 
   initNavigation() {
     const navContainer = this.container.querySelector('#sidebarNav');
-    if (!navContainer) {
-      console.error('Navigation container #sidebarNav not found');
-      return;
-    }
+    if (!navContainer) return;
 
     // Clear existing navigation items
     navContainer.innerHTML = '';
@@ -86,8 +82,6 @@ class Sidebar {
 
       navContainer.appendChild(navLink);
     });
-    
-    console.log(`Initialized ${this.options.navItems.length} navigation items`);
   }
 
   initProfile() {

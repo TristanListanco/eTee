@@ -447,9 +447,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Create detail items
     const details = [
       { label: 'Date & Time', value: date },
-      { label: 'Reading', value: value },
+      { label: 'Device ID', value: value },
       { label: 'Status', value: status, isStatus: true, type: status.toLowerCase().includes('normal') ? 'normal' : 'abnormal' },
-      { label: 'Sensor ID', value: `SEN-${sensorType.substring(0, 3).toUpperCase()}-001` },
+      { label: 'Reading ID', value: `SEN-${sensorType.substring(0, 3).toUpperCase()}-001` },
       { label: 'Location', value: 'Main Tank' }
     ];
     
@@ -486,7 +486,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
     
-    modalBody.appendChild(chartSection);
+  
     
     // Assemble modal
     modalContent.appendChild(modalHeader);
