@@ -197,7 +197,7 @@ body {
 
 .form-container {
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
   display: none;
   position: relative;
   z-index: 1;
@@ -209,13 +209,13 @@ body {
 
 .form-container h2 {
   font-size: 2.2rem;
-  margin-bottom: 1.8rem;
+  margin-bottom: 1.5rem;
   color: var(--text-dark);
   font-weight: 700;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-group label {
@@ -431,6 +431,78 @@ body {
 
   .btn {
     padding: 12px;
+  }
+
+  /* Add this to your signin.css file */
+
+/* Style for select input */
+.input-field select {
+  width: 100%;
+  padding: 14px 14px 14px 50px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--input-radius);
+  font-size: 1rem;
+  transition: var(--transition);
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(5px);
+  position: relative;
+  z-index: 1;
+  appearance: none;
+  cursor: pointer;
+  color: var(--text-dark);
+  
+  /* Custom arrow icon */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23718096' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+
+.input-field select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(245, 179, 1, 0.15);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.input-field select:focus + i,
+.input-field.filled select + i {
+  color: var(--primary-color);
+}
+
+/* Fix icon position for select fields */
+.input-field select + i {
+  pointer-events: none;
+  color: #a0aec0;
+
+}
+
+/* Style select placeholder option */
+.input-field select option[value=""] {
+  color: #a0aec0;
+}
+}
+
+/* Adjust form actions spacing */
+.form-actions {
+  margin-top: 1.25rem; /* Reduced from 1.5rem */
+}
+
+/* Adjust terms checkbox row */
+.options-row.terms {
+  margin-bottom: 1rem; /* Reduced spacing */
+}
+
+/* Responsive adjustment for sign up form height */
+@media (max-height: 768px) {
+  .form-group {
+    margin-bottom: 0.875rem;
+  }
+  
+  .form-container h2 {
+    margin-bottom: 1.25rem;
   }
 }
 

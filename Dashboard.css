@@ -1150,85 +1150,87 @@ input[type="checkbox"] {
   font-weight: 500;
 }
 
-/* Profile Image Section in Modal */
+/* Update the modal content width for profile edit modal */
+#profileEditModal .modal-content {
+  max-width: 750px; /* Increased from default 550px */
+  width: 90%; /* Responsive width */
+}
+
+/* Make form layout more horizontal with 2-3 columns */
+#profileEditForm .form-row {
+  display: flex;
+  gap: 1.5rem; /* Increased gap between columns */
+  margin-bottom: 1rem; /* Reduced bottom margin */
+}
+
+/* Profile image section adjustments */
 .profile-image-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* Changed from column to row */
   align-items: center;
+  gap: 2rem;
   margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 #profilePreview {
-  width: 120px;
-  height: 120px;
+  width: 100px; /* Reduced from 120px */
+  height: 100px; /* Reduced from 120px */
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--primary-color);
-  margin-bottom: 1rem;
+  margin-bottom: 0; /* Removed bottom margin */
 }
 
 .change-photo-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: var(--bg-light);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--text-color);
-  transition: all var(--transition-speed);
+  margin-top: 0; /* Removed top margin */
 }
 
-.change-photo-btn:hover {
-  background-color: var(--primary-light);
-  color: white;
-  border-color: var(--primary-light);
+/* Three column layout for form fields */
+#profileEditForm .form-row.three-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
 }
 
-.change-photo-btn i {
-  font-size: 1.125rem;
+/* Two column layout for form fields */
+#profileEditForm .form-row.two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
 }
 
-/* Profile Form Specific Styles */
-#profileEditForm .form-group select {
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  font-size: 0.875rem;
-  background-color: var(--bg-light);
-  width: 100%;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236c757d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 16px;
-  padding-right: 35px;
+/* Reduce modal body padding */
+#profileEditModal .modal-body {
+  padding: 1.25rem 1.5rem; /* Reduced from 1.5rem */
 }
 
-#profileEditForm .form-group select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.15);
+/* Adjust form actions margin */
+#profileEditModal .form-actions {
+  margin-top: 1rem; /* Reduced from 1.5rem */
 }
 
-/* Readonly Inputs Styling */
-#profileEditForm input[readonly] {
-  background-color: #f8fafc;
-  color: var(--text-light);
-  cursor: not-allowed;
+/* Make inputs slightly smaller */
+#profileEditForm input,
+#profileEditForm select {
+  padding: 0.6rem; /* Reduced from 0.75rem */
+  font-size: 0.8125rem; /* Slightly smaller font */
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .profile-image-section {
-    margin-bottom: 1rem;
+  #profileEditModal .modal-content {
+    max-width: 95%;
   }
   
-  #profilePreview {
-    width: 100px;
-    height: 100px;
+  .profile-image-section {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  #profileEditForm .form-row.three-columns,
+  #profileEditForm .form-row.two-columns {
+    grid-template-columns: 1fr;
   }
 }
