@@ -211,8 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
       temperatureValue.textContent = `${measurement.temperature}°C`;
     }
     
-    
-    
     // Update humidity card
     const humidityValue = document.querySelector('.humidity-value');
     if (humidityValue) {
@@ -233,339 +231,260 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // Add record to table
     updateActivityTable(measurement);
-    
   }
   
-// Function to update activity table with new data
-function updateActivityTable(measurement) {
-  const tableBody = document.querySelector('tbody');
-  if (!tableBody) return;
-  
-  // Format date and time for display
-  const now = new Date(measurement.timestamp);
-  const formattedDate = now.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
-  });
-  
-  const formattedTime = now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-  
-  // Define normal ranges for each parameter
-  const normalRanges = {
-    temperature: { min: 26.0, max: 29.0 },
-   
-    humidity: { min: 50, max: 70 },
-    co2: { min: 350, max: 500 },
-    ammonia: { min: 0, max: 0.25 }
-  };
-  
-  // Check if each value is within normal range
-  const isNormal = {
-    temperature: measurement.temperature >= normalRanges.temperature.min && 
-                 measurement.temperature <= normalRanges.temperature.max,
-    humidity: measurement.humidity >= normalRanges.humidity.min && 
-              measurement.humidity <= normalRanges.humidity.max,
-    co2: measurement.co2 >= normalRanges.co2.min && 
-         measurement.co2 <= normalRanges.co2.max,
-    ammonia: measurement.ammonia >= normalRanges.ammonia.min && 
-             measurement.ammonia <= normalRanges.ammonia.max
-  };
-  
-  // Create a new row for each measurement type
-  const sensors = [
-    { 
-      type: 'temperature', 
-      label: 'Temperature reading', 
-      value: `${measurement.temperature}°C`,
-      isNormal: isNormal.temperature
-    },
-   
-    { 
-      type: 'humidity', 
-      label: 'Humidity reading', 
-      value: `${measurement.humidity}%`,
-      isNormal: isNormal.humidity
-    },
-    { 
-      type: 'co2', 
-      label: 'CO₂ level reading', 
-      value: `${measurement.co2} ppm`,
-      isNormal: isNormal.co2
-    },
-    { 
-      type: 'ammonia', 
-      label: 'Ammonia level reading', 
-      value: `${measurement.ammonia} ppm`,
-      isNormal: isNormal.ammonia
-    }
-  ];
-  
-  // Add the most recent reading to the top
-  sensors.forEach(sensor => {
-    const newRow = document.createElement('tr');
-    newRow.dataset.sensor = sensor.type;
+  // Function to update activity table with new data
+  function updateActivityTable(measurement) {
+    const tableBody = document.querySelector('tbody');
+    if (!tableBody) return;
     
-    newRow.innerHTML = `
-      <td>${formattedDate} • ${formattedTime}</td>
-      <td>${sensor.label}</td>
-      <td>${sensor.value}</td>
-      <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
-      <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
-    `;
+    // Format date and time for display
+    const now = new Date(measurement.timestamp);
+    const formattedDate = now.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
     
-    // Insert at the beginning of the table
-    if (tableBody.firstChild) {
-      tableBody.insertBefore(newRow, tableBody.firstChild);
-    } else {
-      tableBody.appendChild(newRow);
-    }
+    const formattedTime = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
     
-    // Apply current filter
-    const sensorSelector = document.getElementById('sensorSelector');
-    if (sensorSelector && sensorSelector.value !== 'all' && newRow.dataset.sensor !== sensorSelector.value) {
-      newRow.style.display = 'none';
-    }
-  });
-  
-  // Remove excess rows if needed (keep 5 per sensor type)
-  const sensorTypes = ['temperature', 'humidity', 'co2', 'ammonia'];
-  
-  sensorTypes.forEach(type => {
-    const rows = tableBody.querySelectorAll(`tr[data-sensor="${type}"]`);
-    if (rows.length > 5) {
-      for (let i = 5; i < rows.length; i++) {
-        tableBody.removeChild(rows[i]);
+    // Define normal ranges for each parameter
+    const normalRanges = {
+      temperature: { min: 26.0, max: 29.0 },
+      humidity: { min: 50, max: 70 },
+      co2: { min: 350, max: 500 },
+      ammonia: { min: 0, max: 0.25 }
+    };
+    
+    // Check if each value is within normal range
+    const isNormal = {
+      temperature: measurement.temperature >= normalRanges.temperature.min && 
+                   measurement.temperature <= normalRanges.temperature.max,
+      humidity: measurement.humidity >= normalRanges.humidity.min && 
+                measurement.humidity <= normalRanges.humidity.max,
+      co2: measurement.co2 >= normalRanges.co2.min && 
+           measurement.co2 <= normalRanges.co2.max,
+      ammonia: measurement.ammonia >= normalRanges.ammonia.min && 
+               measurement.ammonia <= normalRanges.ammonia.max
+    };
+    
+    // Create a new row for each measurement type
+    const sensors = [
+      { 
+        type: 'temperature', 
+        label: 'Temperature reading', 
+        value: `${measurement.temperature}°C`,
+        isNormal: isNormal.temperature
+      },
+      { 
+        type: 'humidity', 
+        label: 'Humidity reading', 
+        value: `${measurement.humidity}%`,
+        isNormal: isNormal.humidity
+      },
+      { 
+        type: 'co2', 
+        label: 'CO₂ level reading', 
+        value: `${measurement.co2} ppm`,
+        isNormal: isNormal.co2
+      },
+      { 
+        type: 'ammonia', 
+        label: 'Ammonia level reading', 
+        value: `${measurement.ammonia} ppm`,
+        isNormal: isNormal.ammonia
       }
-    }
-  });
-  
-  // Add click event listeners to new view buttons
-  const viewButtons = tableBody.querySelectorAll('.view-btn');
-  viewButtons.forEach(btn => {
-    if (!btn.hasAttribute('data-listener')) {
-      btn.setAttribute('data-listener', 'true');
-      btn.addEventListener('click', function() {
-        const row = this.closest('tr');
-        const date = row.cells[0].textContent;
-        const activity = row.cells[1].textContent;
-        const value = row.cells[2].textContent;
-        const status = row.cells[3].textContent;
-        
-        showDetailModal(date, activity, value, status, row.dataset.sensor);
-      });
-    }
-  });
-}
-
-// Function to show a modal with detailed information about a reading
-function showDetailModal(date, activity, value, status, sensorType) {
-  // Check if a detail modal already exists and remove it
-  const existingModal = document.querySelector('.detail-modal');
-  if (existingModal) {
-    document.body.removeChild(existingModal);
+    ];
+    
+    // Add the most recent reading to the top
+    sensors.forEach(sensor => {
+      const newRow = document.createElement('tr');
+      newRow.dataset.sensor = sensor.type;
+      
+      newRow.innerHTML = `
+        <td>${formattedDate} • ${formattedTime}</td>
+        <td>${sensor.label}</td>
+        <td>${sensor.value}</td>
+        <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
+        <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
+      `;
+      
+      // Insert at the beginning of the table
+      if (tableBody.firstChild) {
+        tableBody.insertBefore(newRow, tableBody.firstChild);
+      } else {
+        tableBody.appendChild(newRow);
+      }
+      
+      // Apply current filter
+      const sensorSelector = document.getElementById('sensorSelector');
+      if (sensorSelector && sensorSelector.value !== 'all' && newRow.dataset.sensor !== sensorSelector.value) {
+        newRow.style.display = 'none';
+      }
+    });
+    
+    // Remove excess rows if needed (keep 5 per sensor type)
+    const sensorTypes = ['temperature', 'humidity', 'co2', 'ammonia'];
+    
+    sensorTypes.forEach(type => {
+      const rows = tableBody.querySelectorAll(`tr[data-sensor="${type}"]`);
+      if (rows.length > 5) {
+        for (let i = 5; i < rows.length; i++) {
+          tableBody.removeChild(rows[i]);
+        }
+      }
+    });
+    
+    // Add click event listeners to new view buttons
+    const viewButtons = tableBody.querySelectorAll('.view-btn');
+    viewButtons.forEach(btn => {
+      if (!btn.hasAttribute('data-listener')) {
+        btn.setAttribute('data-listener', 'true');
+        btn.addEventListener('click', function() {
+          const row = this.closest('tr');
+          const date = row.cells[0].textContent;
+          const activity = row.cells[1].textContent;
+          const value = row.cells[2].textContent;
+          const status = row.cells[3].textContent;
+          
+          showDetailModal(date, activity, value, status, row.dataset.sensor);
+        });
+      }
+    });
   }
-  
-  // Get the appropriate icon based on sensor type
-  let icon;
-  switch(sensorType) {
-    case 'temperature':
-      icon = 'bxs-hot';
-      break;
-   
-    case 'humidity':
-      icon = 'bxs-droplet-half';
-      break;
-    case 'co2':
-      icon = 'bxs-cloud';
-      break;
-    case 'ammonia':
-      icon = 'bxs-flask';
-      break;
-    default:
-      icon = 'bxs-dashboard';
-  }
-  
-  // Create modal elements
-  const modal = document.createElement('div');
-  modal.className = 'modal detail-modal active';
-  
-  const modalContent = document.createElement('div');
-  modalContent.className = 'modal-content';
-  
-  // Modal header
-  const modalHeader = document.createElement('div');
-  modalHeader.className = 'modal-header';
-  
-  const modalTitle = document.createElement('h3');
-  modalTitle.innerHTML = `<i class='bx ${icon}'></i> ${activity} Details`;
-  
-  const closeButton = document.createElement('button');
-  closeButton.className = 'close-button';
-  closeButton.innerHTML = '&times;';
-  closeButton.addEventListener('click', () => {
-    modal.classList.remove('active');
-    setTimeout(() => {
-      document.body.removeChild(modal);
-    }, 300);
-  });
-  
-  modalHeader.appendChild(modalTitle);
-  modalHeader.appendChild(closeButton);
-  
-  // Modal body
-  const modalBody = document.createElement('div');
-  modalBody.className = 'modal-body';
-  
-  // Create detail items
-  const details = [
-    { label: 'Date & Time', value: date },
-    { label: 'Reading', value: value },
-    { label: 'Status', value: status, isStatus: true, type: status.toLowerCase().includes('normal') ? 'normal' : 'abnormal' },
-    { label: 'Sensor ID', value: `SEN-${sensorType.substring(0, 3).toUpperCase()}-001` },
-    { label: 'Location', value: 'Main Tank' }
-  ];
-  
-  details.forEach(detail => {
-    const detailRow = document.createElement('div');
-    detailRow.className = 'detail-row';
-    
-    const detailLabel = document.createElement('div');
-    detailLabel.className = 'detail-label';
-    detailLabel.textContent = detail.label;
-    
-    const detailValue = document.createElement('div');
-    detailValue.className = 'detail-value';
-    
-    if (detail.isStatus) {
-      detailValue.innerHTML = `<span class="status ${detail.type}">${detail.value}</span>`;
-    } else {
-      detailValue.textContent = detail.value;
+
+  // Function to show a modal with detailed information about a reading
+  function showDetailModal(date, activity, value, status, sensorType) {
+    // Check if a detail modal already exists and remove it
+    const existingModal = document.querySelector('.detail-modal');
+    if (existingModal) {
+      document.body.removeChild(existingModal);
     }
     
-    detailRow.appendChild(detailLabel);
-    detailRow.appendChild(detailValue);
-    modalBody.appendChild(detailRow);
-  });
-  
-  // Add a chart placeholder
-  const chartSection = document.createElement('div');
-  chartSection.className = 'detail-chart';
-  chartSection.innerHTML = `
-    <h4>Historical Data (Last 24 Hours)</h4>
-    <div class="chart-placeholder mini">
-      <i class='bx bx-line-chart'></i>
-      <p>Historical data chart would appear here</p>
-    </div>
-  `;
-  
-
-  // Add actions buttons
-  const actionsSection = document.createElement('div');
-  actionsSection.className = 'detail-actions';
-  
-  const exportButton = document.createElement('button');
-  exportButton.className = 'action-button small';
-  
-
-  
- 
-  modalBody.appendChild(actionsSection);
-  
-  // Assemble modal
-  modalContent.appendChild(modalHeader);
-  modalContent.appendChild(modalBody);
-  modal.appendChild(modalContent);
-  
-  // Add to DOM
-  document.body.appendChild(modal);
-  
-  // Close modal when clicking outside
-  window.addEventListener('click', (e) => {
-    if (e.target === modal) {
+    // Get the appropriate icon based on sensor type
+    let icon;
+    switch(sensorType) {
+      case 'temperature':
+        icon = 'bxs-hot';
+        break;
+      case 'humidity':
+        icon = 'bxs-droplet-half';
+        break;
+      case 'co2':
+        icon = 'bxs-cloud';
+        break;
+      case 'ammonia':
+        icon = 'bxs-flask';
+        break;
+      default:
+        icon = 'bxs-dashboard';
+    }
+    
+    // Create modal elements
+    const modal = document.createElement('div');
+    modal.className = 'modal detail-modal active';
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    
+    // Modal header
+    const modalHeader = document.createElement('div');
+    modalHeader.className = 'modal-header';
+    
+    const modalTitle = document.createElement('h3');
+    modalTitle.innerHTML = `<i class='bx ${icon}'></i> ${activity} Details`;
+    
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-button';
+    closeButton.innerHTML = '&times;';
+    closeButton.addEventListener('click', () => {
       modal.classList.remove('active');
       setTimeout(() => {
         document.body.removeChild(modal);
       }, 300);
-    }
-  });
-  
-  
-}
+    });
+    
+    modalHeader.appendChild(modalTitle);
+    modalHeader.appendChild(closeButton);
+    
+    // Modal body
+    const modalBody = document.createElement('div');
+    modalBody.className = 'modal-body';
+    
+    // Create detail items
+    const details = [
+      { label: 'Date & Time', value: date },
+      { label: 'Reading', value: value },
+      { label: 'Status', value: status, isStatus: true, type: status.toLowerCase().includes('normal') ? 'normal' : 'abnormal' },
+      { label: 'Sensor ID', value: `SEN-${sensorType.substring(0, 3).toUpperCase()}-001` },
+      { label: 'Location', value: 'Main Tank' }
+    ];
+    
+    details.forEach(detail => {
+      const detailRow = document.createElement('div');
+      detailRow.className = 'detail-row';
+      
+      const detailLabel = document.createElement('div');
+      detailLabel.className = 'detail-label';
+      detailLabel.textContent = detail.label;
+      
+      const detailValue = document.createElement('div');
+      detailValue.className = 'detail-value';
+      
+      if (detail.isStatus) {
+        detailValue.innerHTML = `<span class="status ${detail.type}">${detail.value}</span>`;
+      } else {
+        detailValue.textContent = detail.value;
+      }
+      
+      detailRow.appendChild(detailLabel);
+      detailRow.appendChild(detailValue);
+      modalBody.appendChild(detailRow);
+    });
+    
+    // Add a chart placeholder
+    const chartSection = document.createElement('div');
+    chartSection.className = 'detail-chart';
+    chartSection.innerHTML = `
+      <h4>Historical Data (Last 24 Hours)</h4>
+      <div class="chart-placeholder mini">
+        <i class='bx bx-line-chart'></i>
+        <p>Historical data chart would appear here</p>
+      </div>
+    `;
+    
+    // Add actions buttons
+    const actionsSection = document.createElement('div');
+    actionsSection.className = 'detail-actions';
+    
+    const exportButton = document.createElement('button');
+    exportButton.className = 'action-button small';
+    
+    modalBody.appendChild(actionsSection);
+    
+    // Assemble modal
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(modalBody);
+    modal.appendChild(modalContent);
+    
+    // Add to DOM
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+          document.body.removeChild(modal);
+        }, 300);
+      }
+    });
+  }
 
-// Add this CSS to your stylesheet
-const detailStyles = `
-.detail-row {
-  display: flex;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.detail-label {
-  font-weight: 500;
-  width: 30%;
-  color: var(--text-light);
-}
-
-.detail-value {
-  width: 70%;
-  color: var(--text-color);
-}
-
-
-
-.chart-placeholder.mini {
-  height: 150px;
-}
-
-
-.action-button.small {
-  padding: 8px 16px;
-  font-size: 0.8rem;
-}
-
-.action-button.secondary {
-  background-color: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-}
-
-.action-button.secondary:hover {
-  background-color: var(--bg-light);
-  border-color: var(--text-color);
-}
-`;
-
-// Add styles to document
-const styleSheet = document.createElement("style");
-styleSheet.textContent = detailStyles;
-document.head.appendChild(styleSheet);
-
-// Initialize table view events
-document.addEventListener('DOMContentLoaded', () => {
-  // Add click events to existing view buttons
-  document.querySelectorAll('.view-btn').forEach(btn => {
-    if (!btn.hasAttribute('data-listener')) {
-      btn.setAttribute('data-listener', 'true');
-      btn.addEventListener('click', function() {
-        const row = this.closest('tr');
-        const date = row.cells[0].textContent;
-        const activity = row.cells[1].textContent;
-        const value = row.cells[2].textContent;
-        const status = row.querySelector('.status').textContent;
-        
-        showDetailModal(date, activity, value, status, row.dataset.sensor);
-      });
-    }
-  });
-});
-  
-  
-  
   // Simple notification system
   function showNotification(message, type = 'info') {
     // Check if notification container exists, create if not
@@ -682,5 +601,216 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ===== Profile Edit Functionality =====
   
+  // Profile Edit Elements
+  const adminProfile = document.getElementById('adminProfile');
+  const profileEditModal = document.getElementById('profileEditModal');
+  const profileEditForm = document.getElementById('profileEditForm');
+  const profileImageInput = document.getElementById('profileImage');
+  const profilePreview = document.getElementById('profilePreview');
+  const adminImage = document.getElementById('adminImage');
+  
+  // Initialize user profile data
+  const userProfileData = {
+    name: "Dja-ver Q. Hassan",
+    email: "etee@gmail.com",
+    phone: "+1234567890",
+    address: "123 Main Street, Anytown, USA",
+    dateRegistered: "January 1, 2024",
+    userRole: "Admin",
+    userID: "USR-001",
+    profileImage: "admin.png"
+  };
+  
+  // Save to localStorage if not exists
+  if (!localStorage.getItem('userProfile')) {
+    localStorage.setItem('userProfile', JSON.stringify(userProfileData));
+  }
+  
+  // Function to load profile data
+  function loadProfileData() {
+    const savedProfile = JSON.parse(localStorage.getItem('userProfile'));
+    if (savedProfile) {
+      // Update sidebar display
+      document.getElementById('adminName').textContent = savedProfile.name;
+      document.getElementById('adminRole').textContent = savedProfile.userRole;
+      document.getElementById('adminEmail').textContent = savedProfile.email;
+      document.getElementById('adminEmail').href = `mailto:${savedProfile.email}`;
+      
+      // Update admin image if it exists
+      if (savedProfile.profileImage) {
+        adminImage.src = savedProfile.profileImage;
+      }
+    }
+  }
+  
+  // Open profile edit modal
+  function openProfileModal() {
+    const savedProfile = JSON.parse(localStorage.getItem('userProfile'));
+    
+    // Populate form with current data
+    document.getElementById('profileName').value = savedProfile.name;
+    document.getElementById('profileEmail').value = savedProfile.email;
+    document.getElementById('profilePhone').value = savedProfile.phone;
+    document.getElementById('profileAddress').value = savedProfile.address;
+    document.getElementById('dateRegistered').value = savedProfile.dateRegistered;
+    document.getElementById('userRole').value = savedProfile.userRole;
+    document.getElementById('userID').value = savedProfile.userID;
+    
+    // Set profile image preview
+    profilePreview.src = savedProfile.profileImage || 'admin.png';
+    
+    // Show modal
+    profileEditModal.classList.add('active');
+  }
+  
+  // Close profile edit modal
+  function closeProfileModal() {
+    profileEditModal.classList.remove('active');
+  }
+  
+  // Handle profile image change
+  profileImageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        profilePreview.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+  
+  // Handle profile form submission
+  profileEditForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    // Get form values
+    const updatedProfile = {
+      name: document.getElementById('profileName').value,
+      email: document.getElementById('profileEmail').value,
+      phone: document.getElementById('profilePhone').value,
+      address: document.getElementById('profileAddress').value,
+      dateRegistered: document.getElementById('dateRegistered').value,
+      userRole: document.getElementById('userRole').value,
+      userID: document.getElementById('userID').value,
+      profileImage: profilePreview.src
+    };
+    
+    // Save to localStorage
+    localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+    
+    // Update UI
+    loadProfileData();
+    
+    // Show success animation
+    const submitBtn = profileEditForm.querySelector('.submit-button');
+    submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
+    submitBtn.classList.add('success-animation');
+    
+    // Close modal after animation
+    setTimeout(() => {
+      submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Changes';
+      submitBtn.classList.remove('success-animation');
+      closeProfileModal();
+      showNotification('Profile updated successfully!', 'success');
+    }, 1500);
+  });
+  
+  // Event Listeners
+  const editOverlay = document.querySelector('.edit-overlay');
+  editOverlay.addEventListener('click', (e) => {
+    e.stopPropagation(); // Prevent event from bubbling to parent
+    openProfileModal();
+  });
+  
+  // Close button event listener
+  const closeButton = profileEditModal.querySelector('.close-button');
+  closeButton.addEventListener('click', closeProfileModal);
+  
+  // Cancel button event listener
+  const cancelButton = profileEditModal.querySelector('.cancel-button');
+  cancelButton.addEventListener('click', closeProfileModal);
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (e) => {
+    if (e.target === profileEditModal) {
+      closeProfileModal();
+    }
+  });
+  
+  // Close modal with Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && profileEditModal.classList.contains('active')) {
+      closeProfileModal();
+    }
+  });
+  
+  // Load profile data on page load
+  loadProfileData();
+});
+
+// Add detail modal styles
+const detailStyles = `
+.detail-row {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-label {
+  font-weight: 500;
+  width: 30%;
+  color: var(--text-light);
+}
+
+.detail-value {
+  width: 70%;
+  color: var(--text-color);
+}
+
+.chart-placeholder.mini {
+  height: 150px;
+}
+
+.action-button.small {
+  padding: 8px 16px;
+  font-size: 0.8rem;
+}
+
+.action-button.secondary {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.action-button.secondary:hover {
+  background-color: var(--bg-light);
+  border-color: var(--text-color);
+}
+`;
+
+// Add styles to document
+const styleSheet = document.createElement("style");
+styleSheet.textContent = detailStyles;
+document.head.appendChild(styleSheet);
+
+// Initialize table view events
+document.addEventListener('DOMContentLoaded', () => {
+  // Add click events to existing view buttons
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    if (!btn.hasAttribute('data-listener')) {
+      btn.setAttribute('data-listener', 'true');
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const date = row.cells[0].textContent;
+        const activity = row.cells[1].textContent;
+        const value = row.cells[2].textContent;
+        const status = row.querySelector('.status').textContent;
+        
+        showDetailModal(date, activity, value, status, row.dataset.sensor);
+      });
+    }
+  });
 });
