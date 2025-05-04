@@ -111,6 +111,9 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     showWaterQualityManagement(coops[0].id);
   }
+  
+  updateCoopManagementTitle();
+
 
   // Update all localStorage calls to use user-specific data
   function showChickenCoopManagement() {
@@ -123,6 +126,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (coopSection) coopSection.style.display = 'block';
     
     loadCoops();
+    updateCoopManagementTitle();
+
   }
 
   function showWaterQualityManagement(coopId = null) {
@@ -230,6 +235,23 @@ document.addEventListener("DOMContentLoaded", () => {
         const coopCard = createCoopCard(coop);
         coopsGrid.appendChild(coopCard);
       });
+    }
+    updateCoopManagementTitle();
+
+  }
+
+  function updateCoopManagementTitle() {
+    const coops = getUserData('etee_coops');
+    const titleElement = document.getElementById('coopManagementTitle');
+    
+    if (titleElement && window.currentUser) {
+      const firstName = window.currentUser.firstName || window.currentUser.name.split(' ')[0];
+      
+      if (coops.length === 0 || coops.length === 1) {
+        titleElement.textContent = `${firstName}'s Chicken Coop`;
+      } else {
+        titleElement.textContent = `${firstName}'s Chicken Coops`;
+      }
     }
   }
 
@@ -360,6 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
     coops = coops.filter(c => c.id !== coopId);
     setUserData('etee_coops', coops);
     loadCoops();
+    updateCoopManagementTitle();
     showNotification('Chicken coop deleted successfully!', 'success');
     
     if (coops.length === 0) {
@@ -445,6 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
       
       closeModal(document.getElementById('addCoopModal'));
       loadCoops();
+      updateCoopManagementTitle();
       showNotification('Chicken coop added successfully!', 'success');
       
       if (coops.length === 1) {
@@ -479,6 +503,8 @@ document.addEventListener("DOMContentLoaded", () => {
         setUserData('etee_coops', coops);
         closeModal(document.getElementById('editCoopModal'));
         loadCoops();
+        updateCoopManagementTitle();
+
         showNotification('Chicken coop updated successfully!', 'success');
       }
     });
