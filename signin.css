@@ -203,6 +203,32 @@ body {
   z-index: 1;
 }
 
+/* Append this CSS to your existing signin.css file */
+
+/* Form row for first and last name fields */
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0; /* Remove bottom margin when in row */
+}
+
+/* Mobile responsive for form rows */
+@media (max-width: 480px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 1rem;
+  }
+}
+
 .form-container.active {
   display: block;
 }
@@ -494,6 +520,7 @@ body {
 .options-row.terms {
   margin-bottom: 1rem; /* Reduced spacing */
 }
+
 
 /* Responsive adjustment for sign up form height */
 @media (max-height: 768px) {

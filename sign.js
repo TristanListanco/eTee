@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
+  // Clear any existing session on signin page load
+  localStorage.removeItem('etee_current_user');
+  
   // Form toggle functionality
   const registerLink = document.querySelector('.register-link');
   const loginLink = document.querySelector('.login-link');
@@ -39,9 +42,31 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Here you would normally authenticate the user
-      // For demo purposes, we'll just redirect to the integrated dashboard
-      showSuccess();
+      // Check if user exists
+      const users = JSON.parse(localStorage.getItem('etee_users') || '[]');
+      const user = users.find(u => u.email === email && u.password === password);
+      
+      if (!user) {
+        showError('Invalid email or password');
+        return;
+      }
+      
+      // Set current user session
+      const currentUser = {
+        userID: user.userID,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        name: `${user.firstName} ${user.lastName}`, // Combined name for backward compatibility
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+        address: user.address,
+        dateRegistered: user.dateRegistered
+      };
+      
+      localStorage.setItem('etee_current_user', JSON.stringify(currentUser));
+      
+      showSuccess('Login successful!');
       
       // Redirect after a short delay to the integrated dashboard
       setTimeout(() => {
@@ -55,7 +80,8 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       
       // Get form values
-      const name = document.getElementById('register-name').value.trim();
+      const firstName = document.getElementById('register-first-name').value.trim();
+      const lastName = document.getElementById('register-last-name').value.trim();
       const email = document.getElementById('register-email').value.trim();
       const password = document.getElementById('register-password').value.trim();
       const phone = document.getElementById('register-phone').value.trim();
@@ -64,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const agreeTerms = document.getElementById('agree-terms').checked;
       
       // Basic validation
-      if (name === '' || email === '' || password === '' || phone === '' || address === '' || role === '') {
+      if (firstName === '' || lastName === '' || email === '' || password === '' || phone === '' || address === '' || role === '') {
         showError('Please fill in all fields');
         return;
       }
@@ -81,20 +107,49 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
       
-      // Store user data (for demonstration - would normally send to server)
+      // Check if email already exists
+      const users = JSON.parse(localStorage.getItem('etee_users') || '[]');
+      if (users.some(u => u.email === email)) {
+        showError('Email already registered');
+        return;
+      }
+      
+      // Generate unique user ID
+      const userID = 'USR-' + Date.now();
+      
+      // Create user data
       const userData = {
-        name: name,
+        userID: userID,
+        firstName: firstName,
+        lastName: lastName,
+        name: `${firstName} ${lastName}`, // Combined name for backward compatibility
         email: email,
+        password: password, // In production, this should be hashed
         phone: phone,
         address: address,
         role: role,
         dateRegistered: new Date().toISOString()
       };
       
-      // Save to localStorage
-      localStorage.setItem('etee_user', JSON.stringify(userData));
+      // Save user to users list
+      users.push(userData);
+      localStorage.setItem('etee_users', JSON.stringify(users));
       
-      // Here you would normally register the user on the server
+      // Set current user session
+      const currentUser = {
+        userID: userData.userID,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        phone: userData.phone,
+        address: userData.address,
+        dateRegistered: userData.dateRegistered
+      };
+      
+      localStorage.setItem('etee_current_user', JSON.stringify(currentUser));
+      
       showSuccess('Registration successful!');
       
       // Redirect after a short delay to the integrated dashboard
