@@ -46,10 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!localStorage.getItem('etee_manure_logs')) {
     localStorage.setItem('etee_manure_logs', JSON.stringify([]));
   }
-  if (!localStorage.getItem('active_coop')) {
-    localStorage.setItem('active_coop', JSON.stringify(null));
-  }
-  
+
+  // Global variable to store the currently selected coop
+  let currentCoopId = null;
 
   // Check if there are existing coops
   const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
@@ -74,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadCoops();
   }
 
-  function showWaterQualityManagement() {
+  function showWaterQualityManagement(coopId = null) {
     const dashboardSection = document.getElementById('dashboard');
     const coopSection = document.getElementById('chickenCoopManagement');
     const waterSection = document.getElementById('waterQualityManagement');
@@ -83,7 +82,21 @@ document.addEventListener("DOMContentLoaded", () => {
     if (coopSection) coopSection.style.display = 'none';
     if (waterSection) waterSection.style.display = 'block';
     
+    if (coopId) {
+      currentCoopId = coopId;
+      const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+      const selectedCoop = coops.find(coop => coop.id === coopId);
+      
+      if (selectedCoop) {
+        const coopLocationTitle = document.getElementById('coopLocationTitle');
+        if (coopLocationTitle) {
+          coopLocationTitle.textContent = `${selectedCoop.location} Chicken Coop`;
+        }
+      }
+    }
+    
     loadDashboardData();
+    loadManureData();
   }
 
   function showFullDashboard() {
@@ -165,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Add event listeners
     const viewDashboardBtn = card.querySelector('.view-dashboard-btn');
     viewDashboardBtn.addEventListener('click', () => {
-      showWaterQualityManagement();
+      showWaterQualityManagement(coop.id);
     });
     
     const deleteBtn = card.querySelector('.delete-btn');
@@ -274,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // If this was the first coop, switch to water quality management
       if (coops.length === 1) {
         setTimeout(() => {
-          showWaterQualityManagement();
+          showWaterQualityManagement(newCoop.id);
         }, 1500);
       }
     });
@@ -342,6 +355,11 @@ document.addEventListener("DOMContentLoaded", () => {
       ammoniaValue.textContent = '0 ppm';
     }
     
+    const manureValue = document.querySelector('.manure-value');
+    if (manureValue) {
+      manureValue.textContent = '0 kg';
+    }
+    
     const tableBody = document.querySelector('tbody');
     if (tableBody) {
       tableBody.innerHTML = `
@@ -358,22 +376,63 @@ document.addEventListener("DOMContentLoaded", () => {
   // Load dashboard data
   function loadDashboardData() {
     const measurements = JSON.parse(localStorage.getItem('etee_measurements') || '[]');
+    const coopMeasurements = measurements.filter(m => m.coopId === currentCoopId);
     
-    if (measurements.length === 0) {
+    if (coopMeasurements.length === 0) {
       setZeroValues();
     } else {
       // Sort measurements by timestamp descending
-      measurements.sort((a, b) => b.timestamp - a.timestamp);
+      coopMeasurements.sort((a, b) => b.timestamp - a.timestamp);
       
       // Update dashboard with most recent measurement
-      updateDashboardData(measurements[0]);
+      updateDashboardData(coopMeasurements[0]);
       
       // Clear and repopulate the table
       const tableBody = document.querySelector('tbody');
       if (tableBody) {
         tableBody.innerHTML = '';
-        measurements.forEach(measurement => {
+        coopMeasurements.forEach(measurement => {
           updateActivityTable(measurement);
+        });
+      }
+    }
+  }
+
+  // Load manure data
+  function loadManureData() {
+    const manureLogs = JSON.parse(localStorage.getItem('etee_manure_logs') || '[]');
+    const coopManureLogs = manureLogs.filter(log => log.coopId === currentCoopId);
+    
+    // Calculate today's total manure collection
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayManure = coopManureLogs
+      .filter(log => new Date(log.timestamp) >= today)
+      .reduce((total, log) => total + log.amountCollected, 0);
+    
+    const manureValue = document.querySelector('.manure-value');
+    if (manureValue) {
+      manureValue.textContent = `${todayManure.toFixed(2)} kg`;
+    }
+    
+    // Update manure table
+    const manureTableBody = document.getElementById('manureTableBody');
+    if (manureTableBody) {
+      if (coopManureLogs.length === 0) {
+        manureTableBody.innerHTML = `
+          <tr id="manureEmptyStateRow">
+            <td colspan="5" style="text-align: center; padding: 2rem;">
+              <i class='bx bx-package' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+              <span style="color: var(--text-light);">No manure collection records available. Click "Add Data" to record collections.</span>
+            </td>
+          </tr>
+        `;
+      } else {
+        manureTableBody.innerHTML = '';
+        coopManureLogs.sort((a, b) => b.timestamp - a.timestamp);
+        coopManureLogs.forEach(log => {
+          updateManureTable(log);
         });
       }
     }
@@ -420,8 +479,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const co2 = parseInt(document.getElementById('co2').value);
       const ammonia = parseFloat(document.getElementById('ammonia').value);
       
+      // Manure data
+      const manureAmount = parseFloat(document.getElementById('manureAmount').value);
+      const odorLevel = parseInt(document.getElementById('odorLevel').value);
+      
+      // Create sensor measurement
       const newMeasurement = {
         id: Date.now(),
+        coopId: currentCoopId,
         dateTime,
         timestamp: new Date().getTime(),
         temperature,
@@ -430,10 +495,26 @@ document.addEventListener("DOMContentLoaded", () => {
         ammonia,
       };
       
-      // Save measurement
+      // Create manure log
+      const newManureLog = {
+        logId: Date.now() + 1, // Ensure unique ID
+        coopId: currentCoopId,
+        timestamp: new Date().getTime(),
+        dateTime,
+        amountCollected: manureAmount,
+        odorLevel,
+        
+      };
+      
+      // Save measurements
       const measurements = JSON.parse(localStorage.getItem('etee_measurements') || '[]');
       measurements.push(newMeasurement);
       localStorage.setItem('etee_measurements', JSON.stringify(measurements));
+      
+      // Save manure log
+      const manureLogs = JSON.parse(localStorage.getItem('etee_manure_logs') || '[]');
+      manureLogs.push(newManureLog);
+      localStorage.setItem('etee_manure_logs', JSON.stringify(manureLogs));
       
       const submitBtn = dataEntryForm.querySelector('.submit-button');
       if (submitBtn) {
@@ -442,6 +523,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       
       updateDashboardData(newMeasurement);
+      updateManureData(newManureLog);
       
       setTimeout(() => {
         if (submitBtn) {
@@ -449,7 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
           submitBtn.classList.remove('success-animation');
         }
         closeModal(dataEntryModal);
-        showNotification('New measurement data added successfully!', 'success');
+        showNotification('New data added successfully!', 'success');
       }, 1500);
     });
   }
@@ -482,6 +564,33 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     updateActivityTable(measurement);
+  }
+  
+  // Update manure data
+  function updateManureData(manureLog) {
+    // Update daily total
+    const manureLogs = JSON.parse(localStorage.getItem('etee_manure_logs') || '[]');
+    const coopManureLogs = manureLogs.filter(log => log.coopId === currentCoopId);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const todayManure = coopManureLogs
+      .filter(log => new Date(log.timestamp) >= today)
+      .reduce((total, log) => total + log.amountCollected, 0);
+    
+    const manureValue = document.querySelector('.manure-value');
+    if (manureValue) {
+      manureValue.textContent = `${todayManure.toFixed(2)} kg`;
+    }
+    
+    // Remove empty state row if it exists
+    const manureEmptyStateRow = document.getElementById('manureEmptyStateRow');
+    if (manureEmptyStateRow) {
+      manureEmptyStateRow.remove();
+    }
+    
+    updateManureTable(manureLog);
   }
   
   // Update activity table
@@ -585,6 +694,130 @@ document.addEventListener("DOMContentLoaded", () => {
           
           showDetailModal(date, activity, value, status, row.dataset.sensor);
         });
+      }
+    });
+  }
+
+  // Update manure table
+  function updateManureTable(manureLog) {
+    const manureTableBody = document.getElementById('manureTableBody');
+    if (!manureTableBody) return;
+    
+    const now = new Date(manureLog.timestamp);
+    const formattedDate = now.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+    
+    const formattedTime = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    const newRow = document.createElement('tr');
+    
+    newRow.innerHTML = `
+      <td>LOG-${manureLog.logId}</td>
+      <td>${formattedDate} • ${formattedTime}</td>
+      <td>${manureLog.amountCollected.toFixed(2)} kg</td>
+      <td>${manureLog.odorLevel}/10</td>
+      <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
+    `;
+    
+    if (manureTableBody.firstChild) {
+      manureTableBody.insertBefore(newRow, manureTableBody.firstChild);
+    } else {
+      manureTableBody.appendChild(newRow);
+    }
+    
+    // Add click event listener to view button
+    const viewBtn = newRow.querySelector('.view-btn');
+    viewBtn.addEventListener('click', function() {
+      showManureDetailModal(manureLog);
+    });
+  }
+  
+  // Show manure detail modal
+  function showManureDetailModal(manureLog) {
+    // Check if a detail modal already exists and remove it
+    const existingModal = document.querySelector('.detail-modal');
+    if (existingModal) {
+      document.body.removeChild(existingModal);
+    }
+    
+    // Create modal elements
+    const modal = document.createElement('div');
+    modal.className = 'modal detail-modal active';
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'modal-content';
+    
+    // Modal header
+    const modalHeader = document.createElement('div');
+    modalHeader.className = 'modal-header';
+    
+    const modalTitle = document.createElement('h3');
+    modalTitle.innerHTML = `<i class='bx bx-package'></i> Manure Collection Details`;
+    
+    const closeButton = document.createElement('button');
+    closeButton.className = 'close-button';
+    closeButton.innerHTML = '&times;';
+    closeButton.addEventListener('click', () => {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        document.body.removeChild(modal);
+      }, 300);
+    });
+    
+    modalHeader.appendChild(modalTitle);
+    modalHeader.appendChild(closeButton);
+    
+    // Modal body
+    const modalBody = document.createElement('div');
+    modalBody.className = 'modal-body';
+    
+    // Create detail items
+    const details = [
+      { label: 'Log ID', value: `LOG-${manureLog.logId}` },
+      { label: 'Date & Time', value: manureLog.dateTime },
+      { label: 'Amount Collected', value: `${manureLog.amountCollected.toFixed(2)} kg` },
+      { label: 'Odor Level', value: `${manureLog.odorLevel}/10` },
+    ];
+    
+    details.forEach(detail => {
+      const detailRow = document.createElement('div');
+      detailRow.className = 'detail-row';
+      
+      const detailLabel = document.createElement('div');
+      detailLabel.className = 'detail-label';
+      detailLabel.textContent = detail.label;
+      
+      const detailValue = document.createElement('div');
+      detailValue.className = 'detail-value';
+      detailValue.textContent = detail.value;
+      
+      detailRow.appendChild(detailLabel);
+      detailRow.appendChild(detailValue);
+      modalBody.appendChild(detailRow);
+    });
+    
+    // Assemble modal
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(modalBody);
+    modal.appendChild(modalContent);
+    
+    // Add to DOM
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+        setTimeout(() => {
+          document.body.removeChild(modal);
+        }, 300);
       }
     });
   }

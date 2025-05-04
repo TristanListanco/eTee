@@ -73,7 +73,7 @@
       <!-- Water Quality Management Section -->
       <div id="waterQualityManagement" class="page-section">
         <div class="top-bar">
-          <h1><i class='bx bxs-dashboard'></i>Water Quality Management</h1>
+          <h1><i class='bx bxs-dashboard'></i><span id="coopLocationTitle">Chicken Coop</span></h1>
           <div class="actions">
             <button id="backToCoopsBtn" class="action-button" style="margin-right: 10px;">
               <i class='bx bx-arrow-back'></i> Back to Coops
@@ -125,15 +125,16 @@
             <div class="card-value ammonia-value">0 ppm</div>
             <div class="card-description">Ammonia concentration</div>
           </div>
-
+          
+          <!-- Manure Collection Card -->
           <div class="card manure-card">
             <div class="card-header">
               <div class="card-title">
-                <i class='bx bxs-trash-alt'></i>Manure
+                <i class='bx bxs-package'></i>Manure Collection
               </div>
             </div>
             <div class="card-value manure-value">0 kg</div>
-            <div class="card-description">Manure collected today</div>
+            <div class="card-description">Total manure collected today</div>
           </div>
         </div>
   
@@ -147,6 +148,7 @@
                 <option value="humidity">Humidity</option>
                 <option value="co2">CO₂ Level</option>
                 <option value="ammonia">Ammonia Level</option>
+                <option value="manure">Manure Collection</option>
               </select>
             </div>
           </div>
@@ -158,7 +160,7 @@
           </div>
         </div>
         
-        <!-- Environmental Season Section -->
+        <!-- Water Quality Sensor Section -->
         <section class="data-section">
           <div class="section-header">
             <h2><i class='bx bx-table'></i>Sensor Readings</h2>
@@ -189,6 +191,34 @@
                   <td colspan="5" style="text-align: center; padding: 2rem;">
                     <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
                     <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        
+        <!-- Manure Management Section -->
+        <section class="data-section" style="margin-top: 2rem;">
+          <div class="section-header">
+            <h2><i class='bx bx-package'></i>Manure Management</h2>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Log ID</th>
+                  <th>Date & Time</th>
+                  <th>Amount Collected (kg)</th>
+                  <th>Odor Level</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="manureTableBody">
+                <tr id="manureEmptyStateRow">
+                  <td colspan="5" style="text-align: center; padding: 2rem;">
+                    <i class='bx bx-package' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+                    <span style="color: var(--text-light);">No manure collection records available. Click "Add Data" to record collections.</span>
                   </td>
                 </tr>
               </tbody>
@@ -295,6 +325,8 @@
             </div>
           </div>
           
+          <h4 style="margin-bottom: 1rem; color: var(--text-color);">Water Quality Sensors</h4>
+          
           <div class="form-row">
             <div class="form-group">
               <label for="temperature">Temperature (°C):</label>
@@ -318,6 +350,19 @@
               <input type="number" id="ammonia" step="0.01" min="0" max="100" required>
             </div>
           </div>
+          
+          <h4 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--text-color);">Manure Collection</h4>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="manureAmount">Amount Collected (kg):</label>
+              <input type="number" id="manureAmount" step="0.01" min="0" max="1000" required>
+            </div>
+            
+            
+          </div>
+          
+          
           
           <div class="form-actions">
             <button type="button" class="cancel-button">Cancel</button>
