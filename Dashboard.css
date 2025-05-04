@@ -483,6 +483,35 @@ td {
 
 td:last-child {
   text-align: center;
+  white-space: nowrap;
+  position: relative;
+}
+
+.delete-icon {
+  font-size: 1.2rem !important;
+  color: var(--danger-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: var(--border-radius-sm);
+  margin-left: 10px;
+}
+.delete-icon:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1) !important;
+  color: var(--danger-color);
+}
+
+.delete-icon:active {
+  transform: scale(0.95) !important;
+}
+
+
+tr:hover .delete-icon {
+  opacity: 1;
 }
 
 /* Column Widths */
@@ -493,11 +522,11 @@ th:nth-child(4), td:nth-child(4) { width: 20%; } /* Status */
 th:nth-child(5), td:nth-child(5) { width: 20%; text-align: center; } /* Actions */
 
 tbody tr {
-  transition: background-color var(--transition-speed);
+  transition: background-color 0.2s ease;
 }
 
 tbody tr:hover {
-  background-color: rgba(211, 211, 211, 0.2);
+  background-color: rgba(211, 211, 211, 0.1);
 }
 
 /* View Button Enhancement */
@@ -517,14 +546,55 @@ tbody tr:hover {
 }
 
 .view-btn:hover {
-  background-color: var(--primary-color);
-  color: white;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.view-btn i {
-  margin-right: 6px;
-  font-size: 0.875rem;
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  transition: all 0.2s ease;
+
+}
+.view-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Delete modal animations */
+.delete-modal.active .modal-content {
+  animation: shake-in 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake-in {
+  0% {
+    transform: scale(0.95) rotate(-1deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.02) rotate(0.5deg);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+/* Delete button in modal */
+.delete-modal .submit-button {
+  transition: all 0.2s ease;
+}
+
+.delete-modal .submit-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.delete-modal .submit-button:active {
+  transform: translateY(0);
 }
 
 /* Status indicators */
@@ -1074,7 +1144,48 @@ tbody tr:hover {
     min-width: auto;
     width: calc(100vw - 40px);
   }
+
+  /* Status indicators - Add/update these in your Dashboard.css */
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-align: center;
+  position: relative;
 }
+
+.status::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.status.normal {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+}
+
+.status.normal::before {
+  background-color: var(--success-color);
+}
+
+.status.abnormal {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.status.abnormal::before {
+  background-color: var(--danger-color);
+}
+}
+
+
 
 /* Add these variables for color manipulation */
 :root {

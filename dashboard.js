@@ -430,18 +430,10 @@ function ensureSensorsForAllCoops() {
         // Re-set the current date/time for the next entry
         if (modal.id === 'dataEntryModal') {
           const now = new Date();
-          const formattedDateTime = now.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-          });
+          const jsonDateTime = JSON.stringify(now).replace(/['"]/g, '');
           const currentDateTimeField = document.getElementById('currentDateTime');
           if (currentDateTimeField) {
-            currentDateTimeField.value = formattedDateTime;
+            currentDateTimeField.value = jsonDateTime;
           }
         }
       }, 300);
@@ -592,44 +584,44 @@ function ensureSensorsForAllCoops() {
   }
 
   // Load manure data
-  function loadManureData() {
-    const manureLogs = JSON.parse(localStorage.getItem('etee_manure_logs') || '[]');
-    const coopManureLogs = manureLogs.filter(log => log.coopId === currentCoopId);
-    
-    // Calculate today's total manure collection
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const todayManure = coopManureLogs
-      .filter(log => new Date(log.timestamp) >= today)
-      .reduce((total, log) => total + log.amountCollected, 0);
-    
-    const manureValue = document.querySelector('.manure-value');
-    if (manureValue) {
-      manureValue.textContent = `${todayManure.toFixed(2)} kg`;
-    }
-    
-    // Update manure table
-    const manureTableBody = document.getElementById('manureTableBody');
-    if (manureTableBody) {
-      if (coopManureLogs.length === 0) {
-        manureTableBody.innerHTML = `
-          <tr id="manureEmptyStateRow">
-            <td colspan="5" style="text-align: center; padding: 2rem;">
-              <i class='bx bx-package' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-              <span style="color: var(--text-light);">No manure collection records available. Click "Add Data" to record collections.</span>
-            </td>
-          </tr>
-        `;
-      } else {
-        manureTableBody.innerHTML = '';
-        coopManureLogs.sort((a, b) => b.timestamp - a.timestamp);
-        coopManureLogs.forEach(log => {
-          updateManureTable(log);
-        });
-      }
+function loadManureData() {
+  const manureLogs = JSON.parse(localStorage.getItem('etee_manure_logs') || '[]');
+  const coopManureLogs = manureLogs.filter(log => log.coopId === currentCoopId);
+  
+  // Calculate today's total manure collection
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const todayManure = coopManureLogs
+    .filter(log => new Date(log.timestamp) >= today)
+    .reduce((total, log) => total + log.amountCollected, 0);
+  
+  const manureValue = document.querySelector('.manure-value');
+  if (manureValue) {
+    manureValue.textContent = `${todayManure.toFixed(2)} kg`;
+  }
+  
+  // Update manure table
+  const manureTableBody = document.getElementById('manureTableBody');
+  if (manureTableBody) {
+    if (coopManureLogs.length === 0) {
+      manureTableBody.innerHTML = `
+        <tr id="manureEmptyStateRow">
+          <td colspan="4" style="text-align: center; padding: 2rem;">
+            <i class='bx bx-package' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+            <span style="color: var(--text-light);">No manure collection records available. Click "Add Data" to record collections.</span>
+          </td>
+        </tr>
+      `;
+    } else {
+      manureTableBody.innerHTML = '';
+      coopManureLogs.sort((a, b) => b.timestamp - a.timestamp);
+      coopManureLogs.forEach(log => {
+        updateManureTable(log);
+      });
     }
   }
+}
 
   // Data entry functionality
   const addDataBtn = document.getElementById('addDataBtn');
@@ -639,18 +631,18 @@ function ensureSensorsForAllCoops() {
   
   function openDataModal() {
     const now = new Date();
-    const formattedDateTime = now.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true
-    });
-    currentDateTimeField.value = formattedDateTime;
+    // Format date using JSON.stringify
+    const jsonDateTime = JSON.stringify(now).replace(/['"]/g, '');
+    
+    const currentDateTimeField = document.getElementById('currentDateTime');
+    currentDateTimeField.value = jsonDateTime;
     
     dataEntryModal.classList.add('active');
+    
+    setTimeout(() => {
+      const tempInput = document.getElementById('temperature');
+      if (tempInput) tempInput.focus();
+    }, 300);
     
     setTimeout(() => {
       const tempInput = document.getElementById('temperature');
@@ -672,7 +664,8 @@ function ensureSensorsForAllCoops() {
         return;
       }
       
-      const dateTime = currentDateTimeField.value;
+      const dateTimeField = document.getElementById('currentDateTime');
+      const dateTime = dateTimeField.value; // This is already in JSON stringified format
       const temperature = parseFloat(document.getElementById('temperature').value);
       const humidity = parseFloat(document.getElementById('humidity').value);
       const co2 = parseInt(document.getElementById('co2').value);
@@ -680,28 +673,38 @@ function ensureSensorsForAllCoops() {
       
       // Manure data
       const manureAmount = parseFloat(document.getElementById('manureAmount').value);
-
       
       // Create sensor measurement
       const newMeasurement = {
         id: Date.now(),
         coopId: currentCoopId,
-        dateTime,
-        timestamp: new Date().getTime(),
+        dateTime: dateTime, // Store the JSON stringified date
+        timestamp: new Date(dateTime).getTime(), // Parse the JSON date to get timestamp
         temperature,
         humidity,
         co2,
         ammonia,
+        readingIds: {
+          temperature: generateReadingId('TEMP'),
+          humidity: generateReadingId('HUMID'),
+          co2: generateReadingId('CO2'),
+          ammonia: generateReadingId('AMM')
+        },
+        deviceIds: {
+          temperature: 'DHT22-PRO',
+          humidity: 'DHT22-PRO',
+          co2: 'MH-Z19B',
+          ammonia: 'MQ-137'
+        }
       };
       
       // Create manure log
       const newManureLog = {
         logId: Date.now() + 1, // Ensure unique ID
         coopId: currentCoopId,
-        timestamp: new Date().getTime(),
-        dateTime,
+        timestamp: new Date(dateTime).getTime(), // Parse the JSON date to get timestamp
+        dateTime: dateTime, // Store the JSON stringified date
         amountCollected: manureAmount,
-      
       };
       
       // Save measurements
@@ -797,149 +800,248 @@ function ensureSensorsForAllCoops() {
   }
   
   // Update activity table
-  function updateActivityTable(measurement) {
-    const tableBody = document.querySelector('tbody');
-    if (!tableBody) return;
+
+function updateActivityTable(measurement) {
+  const tableBody = document.querySelector('tbody');
+  if (!tableBody) return;
+
+  
+
+  
+  
+  const now = new Date(measurement.timestamp);
+  const formattedDate = now.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+  
+  const formattedTime = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+  
+  const normalRanges = {
+    temperature: { min: 26.0, max: 29.0 },
+    humidity: { min: 50, max: 70 },
+    co2: { min: 350, max: 500 },
+    ammonia: { min: 0, max: 0.25 }
+  };
+  
+  const isNormal = {
+    temperature: measurement.temperature >= normalRanges.temperature.min && 
+                 measurement.temperature <= normalRanges.temperature.max,
+    humidity: measurement.humidity >= normalRanges.humidity.min && 
+              measurement.humidity <= normalRanges.humidity.max,
+    co2: measurement.co2 >= normalRanges.co2.min && 
+         measurement.co2 <= normalRanges.co2.max,
+    ammonia: measurement.ammonia >= normalRanges.ammonia.min && 
+             measurement.ammonia <= normalRanges.ammonia.max
+  };
+  
+  const sensors = [
+    { 
+      type: 'temperature', 
+      label: 'Temperature reading', 
+      value: `${measurement.temperature}°C`,
+      isNormal: isNormal.temperature,
+      readingId: measurement.readingIds?.temperature || generateReadingId('TEMP'),
+      deviceId: measurement.deviceIds?.temperature || 'DHT22-PRO'
+    },
+    { 
+      type: 'humidity', 
+      label: 'Humidity reading', 
+      value: `${measurement.humidity}%`,
+      isNormal: isNormal.humidity,
+      readingId: measurement.readingIds?.humidity || generateReadingId('HUMID'),
+      deviceId: measurement.deviceIds?.humidity || 'DHT22-PRO'
+    },
+    { 
+      type: 'co2', 
+      label: 'CO₂ level reading', 
+      value: `${measurement.co2} ppm`,
+      isNormal: isNormal.co2,
+      readingId: measurement.readingIds?.co2 || generateReadingId('CO2'),
+      deviceId: measurement.deviceIds?.co2 || 'MH-Z19B'
+    },
+    { 
+      type: 'ammonia', 
+      label: 'Ammonia level reading', 
+      value: `${measurement.ammonia} ppm`,
+      isNormal: isNormal.ammonia,
+      readingId: measurement.readingIds?.ammonia || generateReadingId('AMM'),
+      deviceId: measurement.deviceIds?.ammonia || 'MQ-137'
+    }
+  ];
+  
+  sensors.forEach(sensor => {
+    const newRow = document.createElement('tr');
+    newRow.dataset.sensor = sensor.type;
     
-    const now = new Date(measurement.timestamp);
-    const formattedDate = now.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
+    // Store device ID in data attribute for later use
+    newRow.dataset.deviceId = sensor.deviceId;
+    newRow.dataset.readingId = sensor.readingId;
     
-    const formattedTime = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-    
-    const normalRanges = {
-      temperature: { min: 26.0, max: 29.0 },
-      humidity: { min: 50, max: 70 },
-      co2: { min: 350, max: 500 },
-      ammonia: { min: 0, max: 0.25 }
-    };
-    
-    const isNormal = {
-      temperature: measurement.temperature >= normalRanges.temperature.min && 
-                   measurement.temperature <= normalRanges.temperature.max,
-      humidity: measurement.humidity >= normalRanges.humidity.min && 
-                measurement.humidity <= normalRanges.humidity.max,
-      co2: measurement.co2 >= normalRanges.co2.min && 
-           measurement.co2 <= normalRanges.co2.max,
-      ammonia: measurement.ammonia >= normalRanges.ammonia.min && 
-               measurement.ammonia <= normalRanges.ammonia.max
-    };
-    
-    const sensors = [
-      { 
-        type: 'temperature', 
-        label: 'Temperature reading', 
-        value: `${measurement.temperature}°C`,
-        isNormal: isNormal.temperature
-      },
-      { 
-        type: 'humidity', 
-        label: 'Humidity reading', 
-        value: `${measurement.humidity}%`,
-        isNormal: isNormal.humidity
-      },
-      { 
-        type: 'co2', 
-        label: 'CO₂ level reading', 
-        value: `${measurement.co2} ppm`,
-        isNormal: isNormal.co2
-      },
-      { 
-        type: 'ammonia', 
-        label: 'Ammonia level reading', 
-        value: `${measurement.ammonia} ppm`,
-        isNormal: isNormal.ammonia
-      }
-    ];
-    
-    sensors.forEach(sensor => {
-      const newRow = document.createElement('tr');
-      newRow.dataset.sensor = sensor.type;
-      
-      newRow.innerHTML = `
-        <td>${formattedDate} • ${formattedTime}</td>
-        <td>${sensor.label}</td>
-        <td>${sensor.value}</td>
-        <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
-        <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
-      `;
-      
-      if (tableBody.firstChild) {
-        tableBody.insertBefore(newRow, tableBody.firstChild);
-      } else {
-        tableBody.appendChild(newRow);
-      }
-      
-      const sensorSelector = document.getElementById('sensorSelector');
-      if (sensorSelector && sensorSelector.value !== 'all' && newRow.dataset.sensor !== sensorSelector.value) {
-        newRow.style.display = 'none';
-      }
-    });
-    
-    // Add click event listeners to view buttons
-    const viewButtons = tableBody.querySelectorAll('.view-btn');
-    viewButtons.forEach(btn => {
-      if (!btn.hasAttribute('data-listener')) {
-        btn.setAttribute('data-listener', 'true');
-        btn.addEventListener('click', function() {
-          const row = this.closest('tr');
-          const date = row.cells[0].textContent;
-          const activity = row.cells[1].textContent;
-          const value = row.cells[2].textContent;
-          const status = row.cells[3].textContent;
-          
-          showDetailModal(date, activity, value, status, row.dataset.sensor);
+    newRow.innerHTML = `
+      <td>${formattedDate} • ${formattedTime}</td>
+      <td>${sensor.readingId}</td>
+      <td>${sensor.value}</td>
+      <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
+      <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
+    `;
+
+     // Add hover delete functionality
+     newRow.addEventListener('mouseenter', () => {
+      if (!newRow.querySelector('.delete-icon')) {
+        const deleteIcon = document.createElement('i');
+        deleteIcon.className = 'bx bx-trash delete-icon';
+        deleteIcon.style.cssText = `
+          color: var(--danger-color);
+          cursor: pointer;
+          margin-left: 10px;
+          font-size: 1.2rem;
+          transition: all 0.2s ease;
+          opacity: 0;
+          transform: scale(0.8);
+        `;
+        
+        // Add the icon to the DOM first
+        newRow.querySelector('td:last-child').appendChild(deleteIcon);
+        
+        // Trigger animation after a small delay
+        setTimeout(() => {
+          deleteIcon.style.opacity = '1';
+          deleteIcon.style.transform = 'scale(1)';
+        }, 10);
+        
+        deleteIcon.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent row click
+          showDeleteModal('sensor', measurement.id, sensor.type);
         });
       }
     });
-  }
-
-  // Update manure table
-  function updateManureTable(manureLog) {
-    const manureTableBody = document.getElementById('manureTableBody');
-    if (!manureTableBody) return;
     
-    const now = new Date(manureLog.timestamp);
-    const formattedDate = now.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+    newRow.addEventListener('mouseleave', () => {
+      const deleteIcon = newRow.querySelector('.delete-icon');
+      if (deleteIcon) {
+        deleteIcon.style.opacity = '0';
+        deleteIcon.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+          if (deleteIcon.parentNode) {
+            deleteIcon.remove();
+          }
+        }, 200);
+      }
     });
     
-    const formattedTime = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
     
-    const newRow = document.createElement('tr');
-    
-    newRow.innerHTML = `
-      <td>LOG-${manureLog.logId}</td>
-      <td>${formattedDate} • ${formattedTime}</td>
-      <td>${manureLog.amountCollected.toFixed(2)} kg</td>
-      <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
-    `;
-    
-    if (manureTableBody.firstChild) {
-      manureTableBody.insertBefore(newRow, manureTableBody.firstChild);
+    if (tableBody.firstChild) {
+      tableBody.insertBefore(newRow, tableBody.firstChild);
     } else {
-      manureTableBody.appendChild(newRow);
+      tableBody.appendChild(newRow);
     }
     
-    // Add click event listener to view button
-    const viewBtn = newRow.querySelector('.view-btn');
-    viewBtn.addEventListener('click', function() {
-      showManureDetailModal(manureLog);
-    });
+    const sensorSelector = document.getElementById('sensorSelector');
+    if (sensorSelector && sensorSelector.value !== 'all' && newRow.dataset.sensor !== sensorSelector.value) {
+      newRow.style.display = 'none';
+    }
+  });
+  
+  // Add click event listeners to view buttons
+  const viewButtons = tableBody.querySelectorAll('.view-btn');
+  viewButtons.forEach(btn => {
+    if (!btn.hasAttribute('data-listener')) {
+      btn.setAttribute('data-listener', 'true');
+      btn.addEventListener('click', function() {
+        const row = this.closest('tr');
+        const date = row.cells[0].textContent;
+        const readingId = row.dataset.readingId;
+        const deviceId = row.dataset.deviceId;
+        const value = row.cells[2].textContent;
+        const status = row.cells[3].textContent;
+        
+        showDetailModal(date, readingId, deviceId, value, status, row.dataset.sensor);
+      });
+    }
+  });
+}
+
+
+// Update manure table
+function updateManureTable(manureLog) {
+  const manureTableBody = document.getElementById('manureTableBody');
+  if (!manureTableBody) return;
+  
+  // Format date as JSON stringified format
+  const timestamp = new Date(manureLog.timestamp);
+  const jsonDate = JSON.stringify(timestamp).replace(/['"]/g, '');
+  
+  const newRow = document.createElement('tr');
+  
+  newRow.innerHTML = `
+    <td>${jsonDate}</td>
+    <td>LOG-${manureLog.logId}</td>
+    <td>${manureLog.amountCollected.toFixed(2)} kg</td>
+    <td style="text-align: center;"><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
+  `;
+  
+  // Add hover delete functionality
+  newRow.addEventListener('mouseenter', () => {
+    if (!newRow.querySelector('.delete-icon')) {
+      const deleteIcon = document.createElement('i');
+      deleteIcon.className = 'bx bx-trash delete-icon';
+      deleteIcon.style.cssText = `
+        color: var(--danger-color);
+        cursor: pointer;
+        margin-left: 10px;
+        font-size: 1.2rem;
+        transition: all 0.2s ease;
+        opacity: 0;
+        transform: scale(0.8);
+      `;
+      
+      // Add the icon to the DOM first
+      newRow.querySelector('td:last-child').appendChild(deleteIcon);
+      
+      // Trigger animation after a small delay
+      setTimeout(() => {
+        deleteIcon.style.opacity = '1';
+        deleteIcon.style.transform = 'scale(1)';
+      }, 10);
+      
+      deleteIcon.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent row click
+        showDeleteModal('manure', manureLog.logId);
+      });
+    }
+  });
+  
+  newRow.addEventListener('mouseleave', () => {
+    const deleteIcon = newRow.querySelector('.delete-icon');
+    if (deleteIcon) {
+      deleteIcon.style.opacity = '0';
+      deleteIcon.style.transform = 'scale(0.8)';
+      setTimeout(() => {
+        if (deleteIcon.parentNode) {
+          deleteIcon.remove();
+        }
+      }, 200);
+    }
+  });
+  
+  if (manureTableBody.firstChild) {
+    manureTableBody.insertBefore(newRow, manureTableBody.firstChild);
+  } else {
+    manureTableBody.appendChild(newRow);
   }
+  
+  // Add click event listener to view button
+  const viewBtn = newRow.querySelector('.view-btn');
+  viewBtn.addEventListener('click', function() {
+    showManureDetailModal(manureLog);
+  });
+}
   
   // Show manure detail modal
   function showManureDetailModal(manureLog) {
@@ -1023,6 +1125,116 @@ function ensureSensorsForAllCoops() {
     });
   }
 
+  // Show delete confirmation modal
+function showDeleteModal(type, id, sensorType = null) {
+  // Create modal elements
+  const modal = document.createElement('div');
+  modal.className = 'modal delete-modal active';
+  
+  const modalContent = document.createElement('div');
+  modalContent.className = 'modal-content';
+  
+  // Modal header
+  const modalHeader = document.createElement('div');
+  modalHeader.className = 'modal-header';
+  
+  const modalTitle = document.createElement('h3');
+  modalTitle.innerHTML = `<i class='bx bx-trash'></i> Delete ${type === 'sensor' ? 'Sensor Reading' : 'Manure Log'}`;
+  
+  const closeButton = document.createElement('button');
+  closeButton.className = 'close-button';
+  closeButton.innerHTML = '&times;';
+  closeButton.addEventListener('click', () => {
+    modal.classList.remove('active');
+    setTimeout(() => {
+      document.body.removeChild(modal);
+    }, 300);
+  });
+  
+  modalHeader.appendChild(modalTitle);
+  modalHeader.appendChild(closeButton);
+  
+  // Modal body
+  const modalBody = document.createElement('div');
+  modalBody.className = 'modal-body';
+  modalBody.innerHTML = `
+    <p style="margin-bottom: 1.5rem;">Are you sure you want to delete this ${type === 'sensor' ? 'sensor reading' : 'manure collection log'}?</p>
+    <p style="color: var(--danger-color); font-size: 0.9rem;">This action cannot be undone.</p>
+  `;
+  
+  // Modal actions
+  const modalActions = document.createElement('div');
+  modalActions.className = 'form-actions';
+  
+  const cancelButton = document.createElement('button');
+  cancelButton.className = 'cancel-button';
+  cancelButton.textContent = 'Cancel';
+  cancelButton.addEventListener('click', () => {
+    modal.classList.remove('active');
+    setTimeout(() => {
+      document.body.removeChild(modal);
+    }, 300);
+  });
+  
+  const deleteButton = document.createElement('button');
+  deleteButton.className = 'submit-button';
+  deleteButton.style.backgroundColor = 'var(--danger-color)';
+  deleteButton.innerHTML = '<i class="bx bx-trash"></i> Delete';
+  deleteButton.addEventListener('click', () => {
+    if (type === 'sensor') {
+      deleteSensorReading(id, sensorType);
+    } else {
+      deleteManureLog(id);
+    }
+    modal.classList.remove('active');
+    setTimeout(() => {
+      document.body.removeChild(modal);
+    }, 300);
+  });
+  
+  modalActions.appendChild(cancelButton);
+  modalActions.appendChild(deleteButton);
+  
+  // Assemble modal
+  modalContent.appendChild(modalHeader);
+  modalContent.appendChild(modalBody);
+  modalContent.appendChild(modalActions);
+  modal.appendChild(modalContent);
+  
+  // Add to DOM
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        document.body.removeChild(modal);
+      }, 300);
+    }
+  });
+}
+
+// Delete sensor reading
+function deleteSensorReading(measurementId, sensorType) {
+  let measurements = JSON.parse(localStorage.getItem('etee_measurements') || '[]');
+  measurements = measurements.filter(m => m.id !== measurementId);
+  localStorage.setItem('etee_measurements', JSON.stringify(measurements));
+  
+  loadDashboardData();
+  showNotification('Sensor reading deleted successfully!', 'success');
+}
+
+// Delete manure log
+function deleteManureLog(logId) {
+  let manureLogs = JSON.parse(localStorage.getItem('etee_manure_logs') || '[]');
+  manureLogs = manureLogs.filter(log => log.logId !== logId);
+  localStorage.setItem('etee_manure_logs', JSON.stringify(manureLogs));
+  
+  loadManureData(); // This will now properly show the empty state if no logs remain
+  showNotification('Manure log deleted successfully!', 'success');
+}
+
   // Sensor dropdown filtering
   const sensorSelector = document.getElementById('sensorSelector');
   if (sensorSelector) {
@@ -1055,123 +1267,126 @@ function ensureSensorsForAllCoops() {
   }
 
   // Show detail modal
-  function showDetailModal(date, activity, value, status, sensorType) {
-    // Check if a detail modal already exists and remove it
-    const existingModal = document.querySelector('.detail-modal');
-    if (existingModal) {
-      document.body.removeChild(existingModal);
+function showDetailModal(date, readingId, deviceId, value, status, sensorType) {
+  // Check if a detail modal already exists and remove it
+  const existingModal = document.querySelector('.detail-modal');
+  if (existingModal) {
+    document.body.removeChild(existingModal);
+  }
+  
+  // Get the appropriate icon based on sensor type
+  let icon;
+  switch(sensorType) {
+    case 'temperature':
+      icon = 'bxs-hot';
+      break;
+    case 'humidity':
+      icon = 'bxs-droplet-half';
+      break;
+    case 'co2':
+      icon = 'bxs-cloud';
+      break;
+    case 'ammonia':
+      icon = 'bxs-flask';
+      break;
+    default:
+      icon = 'bxs-dashboard';
+  }
+  
+  // Create modal elements
+  const modal = document.createElement('div');
+  modal.className = 'modal detail-modal active';
+  
+  const modalContent = document.createElement('div');
+  modalContent.className = 'modal-content';
+  
+  // Modal header
+  const modalHeader = document.createElement('div');
+  modalHeader.className = 'modal-header';
+  
+  const modalTitle = document.createElement('h3');
+  modalTitle.innerHTML = `<i class='bx ${icon}'></i> Sensor Reading Details`;
+  
+  const closeButton = document.createElement('button');
+  closeButton.className = 'close-button';
+  closeButton.innerHTML = '&times;';
+  closeButton.addEventListener('click', () => {
+    modal.classList.remove('active');
+    setTimeout(() => {
+      document.body.removeChild(modal);
+    }, 300);
+  });
+  
+  modalHeader.appendChild(modalTitle);
+  modalHeader.appendChild(closeButton);
+  
+  // Modal body
+  const modalBody = document.createElement('div');
+  modalBody.className = 'modal-body';
+  
+  // Determine if status is normal or abnormal
+  const isNormal = status.toLowerCase().includes('normal') && !status.toLowerCase().includes('abnormal');
+  
+  // Create detail items
+  const details = [
+    { label: 'Date & Time', value: date },
+    { label: 'Reading ID', value: readingId },
+    { label: 'Device ID', value: deviceId },
+    { label: 'Value', value: value },
+    { label: 'Status', value: status, isStatus: true, type: isNormal ? 'normal' : 'abnormal' },
+  ];
+  
+  details.forEach(detail => {
+    const detailRow = document.createElement('div');
+    detailRow.className = 'detail-row';
+    
+    const detailLabel = document.createElement('div');
+    detailLabel.className = 'detail-label';
+    detailLabel.textContent = detail.label;
+    
+    const detailValue = document.createElement('div');
+    detailValue.className = 'detail-value';
+    
+    if (detail.isStatus) {
+      detailValue.innerHTML = `<span class="status ${detail.type}">${detail.value}</span>`;
+    } else {
+      detailValue.textContent = detail.value;
     }
     
-    // Get the appropriate icon based on sensor type
-    let icon;
-    switch(sensorType) {
-      case 'temperature':
-        icon = 'bxs-hot';
-        break;
-      case 'humidity':
-        icon = 'bxs-droplet-half';
-        break;
-      case 'co2':
-        icon = 'bxs-cloud';
-        break;
-      case 'ammonia':
-        icon = 'bxs-flask';
-        break;
-      default:
-        icon = 'bxs-dashboard';
-    }
-    
-    // Create modal elements
-    const modal = document.createElement('div');
-    modal.className = 'modal detail-modal active';
-    
-    const modalContent = document.createElement('div');
-    modalContent.className = 'modal-content';
-    
-    // Modal header
-    const modalHeader = document.createElement('div');
-    modalHeader.className = 'modal-header';
-    
-    const modalTitle = document.createElement('h3');
-    modalTitle.innerHTML = `<i class='bx ${icon}'></i> ${activity} Details`;
-    
-    const closeButton = document.createElement('button');
-    closeButton.className = 'close-button';
-    closeButton.innerHTML = '&times;';
-    closeButton.addEventListener('click', () => {
+    detailRow.appendChild(detailLabel);
+    detailRow.appendChild(detailValue);
+    modalBody.appendChild(detailRow);
+  });
+  
+  // Add a chart placeholder
+  const chartSection = document.createElement('div');
+  chartSection.className = 'detail-chart';
+  chartSection.innerHTML = `
+    <h4>Historical Data (Last 24 Hours)</h4>
+    <div class="chart-placeholder mini">
+      <i class='bx bx-line-chart'></i>
+      <p>Historical data chart would appear here</p>
+    </div>
+  `;
+  
+  // Assemble modal
+  modalContent.appendChild(modalHeader);
+  modalContent.appendChild(modalBody);
+  modal.appendChild(modalContent);
+  
+  // Add to DOM
+  document.body.appendChild(modal);
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
       modal.classList.remove('active');
       setTimeout(() => {
         document.body.removeChild(modal);
       }, 300);
-    });
-    
-    modalHeader.appendChild(modalTitle);
-    modalHeader.appendChild(closeButton);
-    
-    // Modal body
-    const modalBody = document.createElement('div');
-    modalBody.className = 'modal-body';
-    
-    // Create detail items
-    const details = [
-      { label: 'Date & Time', value: date },
-      { label: 'Device ID', value: value },
-      { label: 'Status', value: status, isStatus: true, type: status.toLowerCase().includes('normal') ? 'normal' : 'abnormal' },
-      { label: 'Reading ID', value: `SEN-${sensorType.substring(0, 3).toUpperCase()}-001` },
-      { label: 'Location', value: 'Main Tank' }
-    ];
-    
-    details.forEach(detail => {
-      const detailRow = document.createElement('div');
-      detailRow.className = 'detail-row';
-      
-      const detailLabel = document.createElement('div');
-      detailLabel.className = 'detail-label';
-      detailLabel.textContent = detail.label;
-      
-      const detailValue = document.createElement('div');
-      detailValue.className = 'detail-value';
-      
-      if (detail.isStatus) {
-        detailValue.innerHTML = `<span class="status ${detail.type}">${detail.value}</span>`;
-      } else {
-        detailValue.textContent = detail.value;
-      }
-      
-      detailRow.appendChild(detailLabel);
-      detailRow.appendChild(detailValue);
-      modalBody.appendChild(detailRow);
-    });
-    
-    // Add a chart placeholder
-    const chartSection = document.createElement('div');
-    chartSection.className = 'detail-chart';
-    chartSection.innerHTML = `
-      <h4>Historical Data (Last 24 Hours)</h4>
-      <div class="chart-placeholder mini">
-        <i class='bx bx-line-chart'></i>
-        <p>Historical data chart would appear here</p>
-      </div>
-    `;
-    
-    // Assemble modal
-    modalContent.appendChild(modalHeader);
-    modalContent.appendChild(modalBody);
-    modal.appendChild(modalContent);
-    
-    // Add to DOM
-    document.body.appendChild(modal);
-    
-    // Close modal when clicking outside
-    window.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.classList.remove('active');
-        setTimeout(() => {
-          document.body.removeChild(modal);
-        }, 300);
-      }
-    });
-  }
+    }
+  });
+}
 
   // Simple notification system
   function showNotification(message, type = 'info') {
@@ -1374,3 +1589,13 @@ function ensureSensorsForAllCoops() {
     }
   });
 });
+
+// Function to generate random reading ID
+function generateReadingId(prefix) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = prefix + '-';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
