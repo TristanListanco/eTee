@@ -47,6 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem('etee_manure_logs', JSON.stringify([]));
   }
 
+  ensureSensorsForAllCoops();
+
+
+
   // Global variable to store the currently selected coop
   let currentCoopId = null;
 
@@ -97,7 +101,113 @@ document.addEventListener("DOMContentLoaded", () => {
     
     loadDashboardData();
     loadManureData();
+    loadSensorData(); 
+
   }
+
+  // Sensor Devices Functions
+function loadSensorData() {
+  const sensorDevices = JSON.parse(localStorage.getItem('etee_sensor_devices') || '[]');
+  const coopSensors = sensorDevices.filter(sensor => sensor.coopId === currentCoopId);
+  
+  const sensorDevicesList = document.getElementById('sensorDevicesList');
+  const sensorEmptyState = document.getElementById('sensorEmptyState');
+  
+  if (coopSensors.length === 0) {
+    sensorDevicesList.style.display = 'none';
+    sensorEmptyState.style.display = 'block';
+  } else {
+    sensorDevicesList.style.display = 'grid';
+    sensorEmptyState.style.display = 'none';
+    
+    sensorDevicesList.innerHTML = '';
+    
+    // Create sensor device items
+    coopSensors.forEach(sensor => {
+      const sensorItem = createSensorItem(sensor);
+      sensorDevicesList.appendChild(sensorItem);
+    });
+  }
+}
+
+function createSensorItem(sensor) {
+  const item = document.createElement('div');
+  item.className = 'sensor-item';
+  item.style.cssText = `
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+  `;
+  
+  // Add hover effect
+  item.addEventListener('mouseenter', () => {
+    item.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+  });
+  
+  item.addEventListener('mouseleave', () => {
+    item.style.backgroundColor = 'transparent';
+  });
+  
+  // Create status indicator
+  const statusColor = sensor.status.toLowerCase() === 'active' ? '#22c55e' : '#ef4444';
+  
+  item.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${statusColor};"></div>
+      <div>
+        <div style="font-weight: 600; color: var(--text-color);">${sensor.deviceType}</div>
+        <div style="font-size: 0.875rem; color: var(--text-light);">#${sensor.modelNumber}</div>
+      </div>
+    </div>
+  `;
+  
+  // Add click event to show details
+  item.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showSensorDetailModal(sensor);
+  });
+  
+  return item;
+}
+
+function showSensorDetailModal(sensor) {
+  const modal = document.getElementById('sensorDetailModal');
+  const detailContent = document.getElementById('sensorDetailContent');
+  
+  const formattedDate = new Date(sensor.installationDate).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  detailContent.innerHTML = `
+    <div class="sensor-detail-info">
+      <div class="detail-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+        <span style="font-weight: 500; color: var(--text-light);">Device ID</span>
+        <span style="color: var(--text-color);">${sensor.deviceId}</span>
+      </div>
+      <div class="detail-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+        <span style="font-weight: 500; color: var(--text-light);">Device Type</span>
+        <span style="color: var(--text-color);">${sensor.deviceType}</span>
+      </div>
+      <div class="detail-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+        <span style="font-weight: 500; color: var(--text-light);">Model Number</span>
+        <span style="color: var(--text-color);">${sensor.modelNumber}</span>
+      </div>
+      <div class="detail-row" style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+        <span style="font-weight: 500; color: var(--text-light);">Installation Date</span>
+        <span style="color: var(--text-color);">${formattedDate}</span>
+      </div>
+      <div class="detail-row" style="display: flex; justify-content: space-between; padding: 1rem 0;">
+        <span style="font-weight: 500; color: var(--text-light);">Status</span>
+        <span class="status ${sensor.status.toLowerCase()}" style="color: ${sensor.status.toLowerCase() === 'active' ? 'var(--success-color)' : 'var(--danger-color)'};">${sensor.status}</span>
+      </div>
+    </div>
+  `;
+  
+  modal.classList.add('active');
+}
 
   function showFullDashboard() {
     const dashboardSection = document.getElementById('dashboard');
@@ -195,6 +305,68 @@ document.addEventListener("DOMContentLoaded", () => {
     
     return card;
   }
+  // Function to create predefined sensors for a coop
+function createPredefinedSensors(coopId) {
+  const sensorDevices = JSON.parse(localStorage.getItem('etee_sensor_devices') || '[]');
+  
+  // Predefined sensor configurations
+  const predefinedSensors = [
+    {
+      deviceId: `TEMP-${coopId}-001`,
+      coopId: coopId,
+      deviceType: 'Temperature Sensor',
+      modelNumber: 'DHT22-PRO',
+      installationDate: new Date().toISOString(),
+      status: 'Active'
+    },
+    {
+      deviceId: `HUMID-${coopId}-001`,
+      coopId: coopId,
+      deviceType: 'Humidity Sensor',
+      modelNumber: 'DHT22-PRO',
+      installationDate: new Date().toISOString(),
+      status: 'Active'
+    },
+    {
+      deviceId: `CO2-${coopId}-001`,
+      coopId: coopId,
+      deviceType: 'CO2 Sensor',
+      modelNumber: 'MH-Z19B',
+      installationDate: new Date().toISOString(),
+      status: 'Active'
+    },
+    {
+      deviceId: `AMM-${coopId}-001`,
+      coopId: coopId,
+      deviceType: 'Ammonia Sensor',
+      modelNumber: 'MQ-137',
+      installationDate: new Date().toISOString(),
+      status: 'Active'
+    }
+  ];
+  
+  // Add all predefined sensors
+  predefinedSensors.forEach(sensor => {
+    sensorDevices.push(sensor);
+  });
+  
+  localStorage.setItem('etee_sensor_devices', JSON.stringify(sensorDevices));
+}
+// Function to ensure all coops have predefined sensors
+function ensureSensorsForAllCoops() {
+  const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+  const sensorDevices = JSON.parse(localStorage.getItem('etee_sensor_devices') || '[]');
+  
+  coops.forEach(coop => {
+    // Check if this coop already has sensors
+    const coopSensors = sensorDevices.filter(sensor => sensor.coopId === coop.id);
+    
+    // If no sensors exist for this coop, create them
+    if (coopSensors.length === 0) {
+      createPredefinedSensors(coop.id);
+    }
+  });
+}
 
   // Delete coop
   function deleteCoop(coopId) {
@@ -298,6 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
       coops.push(newCoop);
       localStorage.setItem('etee_coops', JSON.stringify(coops));
+      createPredefinedSensors(newCoop.id);
       
       closeModal(document.getElementById('addCoopModal'));
       loadCoops();
@@ -309,6 +482,7 @@ document.addEventListener("DOMContentLoaded", () => {
           showWaterQualityManagement(newCoop.id);
         }, 1500);
       }
+
     });
   }
 

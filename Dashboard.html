@@ -137,6 +137,24 @@
             <div class="card-description">Total manure collected today</div>
           </div>
         </div>
+
+           <!-- Sensor Devices Card -->
+           <div class="card sensor-card" style="cursor: pointer;" id="sensorDevicesCard">
+            <div class="card-header">
+              <div class="card-title">
+                <i class='bx bxs-chip'></i>Sensor Log Information
+              </div>
+             
+            </div>
+            <div class="card-description" style="margin-bottom: 1rem;">Monitor your connected devices and sensors</div>
+            <div class="sensor-devices-list" id="sensorDevicesList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <!-- Sensor devices will be dynamically added here -->
+            </div>
+            <div id="sensorEmptyState" style="text-align: center; padding: 2rem; display: none;">
+              <i class='bx bxs-chip' style="font-size: 2rem; color: var(--text-light); margin-bottom: 0.5rem;"></i>
+              <p style="color: var(--text-light);">No sensor devices found for this coop.</p>
+            </div>
+          </div>
   
         <!-- Chart -->
         <div class="chart-container">
