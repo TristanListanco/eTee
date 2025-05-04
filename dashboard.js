@@ -43,6 +43,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!localStorage.getItem('etee_measurements')) {
     localStorage.setItem('etee_measurements', JSON.stringify([]));
   }
+  if (!localStorage.getItem('etee_manure_logs')) {
+    localStorage.setItem('etee_manure_logs', JSON.stringify([]));
+  }
+  if (!localStorage.getItem('active_coop')) {
+    localStorage.setItem('active_coop', JSON.stringify(null));
+  }
+  
 
   // Check if there are existing coops
   const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');

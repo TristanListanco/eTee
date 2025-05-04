@@ -185,6 +185,12 @@ body {
   opacity: 1;
 }
 
+
+
+.manure-card::after {
+  background: linear-gradient(to right, #cd853f, #8b4513);
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;
