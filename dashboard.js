@@ -56,8 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Show chicken coop management section
     showChickenCoopManagement();
   } else {
-    // Show water quality management section
-    showWaterQualityManagement();
+    // Show water quality management section with the first coop
+    showWaterQualityManagement(coops[0].id);
   }
 
   // Chicken Coop Management Functions
@@ -253,7 +253,26 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.classList.remove('active');
     const form = modal.querySelector('form');
     if (form) {
-      setTimeout(() => form.reset(), 300);
+      setTimeout(() => {
+        form.reset();
+        // Re-set the current date/time for the next entry
+        if (modal.id === 'dataEntryModal') {
+          const now = new Date();
+          const formattedDateTime = now.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          });
+          const currentDateTimeField = document.getElementById('currentDateTime');
+          if (currentDateTimeField) {
+            currentDateTimeField.value = formattedDateTime;
+          }
+        }
+      }, 300);
     }
   }
 
@@ -359,18 +378,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (manureValue) {
       manureValue.textContent = '0 kg';
     }
-    
-    const tableBody = document.querySelector('tbody');
-    if (tableBody) {
-      tableBody.innerHTML = `
-        <tr id="emptyStateRow">
-          <td colspan="5" style="text-align: center; padding: 2rem;">
-            <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-            <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
-          </td>
-        </tr>
-      `;
-    }
   }
 
   // Load dashboard data
@@ -380,6 +387,18 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (coopMeasurements.length === 0) {
       setZeroValues();
+      // Show empty state in table
+      const tableBody = document.querySelector('tbody');
+      if (tableBody) {
+        tableBody.innerHTML = `
+          <tr id="emptyStateRow">
+            <td colspan="5" style="text-align: center; padding: 2rem;">
+              <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+              <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+            </td>
+          </tr>
+        `;
+      }
     } else {
       // Sort measurements by timestamp descending
       coopMeasurements.sort((a, b) => b.timestamp - a.timestamp);
@@ -473,6 +492,12 @@ document.addEventListener("DOMContentLoaded", () => {
     dataEntryForm.addEventListener('submit', (e) => {
       e.preventDefault();
       
+      // Make sure we have a current coop selected
+      if (!currentCoopId) {
+        showNotification('Please select a chicken coop first!', 'error');
+        return;
+      }
+      
       const dateTime = currentDateTimeField.value;
       const temperature = parseFloat(document.getElementById('temperature').value);
       const humidity = parseFloat(document.getElementById('humidity').value);
@@ -481,7 +506,7 @@ document.addEventListener("DOMContentLoaded", () => {
       
       // Manure data
       const manureAmount = parseFloat(document.getElementById('manureAmount').value);
-      const odorLevel = parseInt(document.getElementById('odorLevel').value);
+
       
       // Create sensor measurement
       const newMeasurement = {
@@ -502,8 +527,7 @@ document.addEventListener("DOMContentLoaded", () => {
         timestamp: new Date().getTime(),
         dateTime,
         amountCollected: manureAmount,
-        odorLevel,
-        
+      
       };
       
       // Save measurements
@@ -522,8 +546,13 @@ document.addEventListener("DOMContentLoaded", () => {
         submitBtn.classList.add('success-animation');
       }
       
+      // Update dashboard data immediately
       updateDashboardData(newMeasurement);
       updateManureData(newManureLog);
+      
+      // Reload dashboard to show new data
+      loadDashboardData();
+      loadManureData();
       
       setTimeout(() => {
         if (submitBtn) {
@@ -722,7 +751,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <td>LOG-${manureLog.logId}</td>
       <td>${formattedDate} • ${formattedTime}</td>
       <td>${manureLog.amountCollected.toFixed(2)} kg</td>
-      <td>${manureLog.odorLevel}/10</td>
       <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
     `;
     
@@ -783,7 +811,6 @@ document.addEventListener("DOMContentLoaded", () => {
       { label: 'Log ID', value: `LOG-${manureLog.logId}` },
       { label: 'Date & Time', value: manureLog.dateTime },
       { label: 'Amount Collected', value: `${manureLog.amountCollected.toFixed(2)} kg` },
-      { label: 'Odor Level', value: `${manureLog.odorLevel}/10` },
     ];
     
     details.forEach(detail => {
