@@ -36,12 +36,286 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ===== Dashboard Specific Functionality =====
+  // Initialize storage
+  if (!localStorage.getItem('etee_coops')) {
+    localStorage.setItem('etee_coops', JSON.stringify([]));
+  }
+  if (!localStorage.getItem('etee_measurements')) {
+    localStorage.setItem('etee_measurements', JSON.stringify([]));
+  }
+
+  // Check if there are existing coops
+  const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+  if (coops.length === 0) {
+    // Show chicken coop management section
+    showChickenCoopManagement();
+  } else {
+    // Show water quality management section
+    showWaterQualityManagement();
+  }
+
+  // Chicken Coop Management Functions
+  function showChickenCoopManagement() {
+    const dashboardSection = document.getElementById('dashboard');
+    const coopSection = document.getElementById('chickenCoopManagement');
+    const waterSection = document.getElementById('waterQualityManagement');
+    
+    if (dashboardSection) dashboardSection.style.display = 'none';
+    if (waterSection) waterSection.style.display = 'none';
+    if (coopSection) coopSection.style.display = 'block';
+    
+    loadCoops();
+  }
+
+  function showWaterQualityManagement() {
+    const dashboardSection = document.getElementById('dashboard');
+    const coopSection = document.getElementById('chickenCoopManagement');
+    const waterSection = document.getElementById('waterQualityManagement');
+    
+    if (dashboardSection) dashboardSection.style.display = 'none';
+    if (coopSection) coopSection.style.display = 'none';
+    if (waterSection) waterSection.style.display = 'block';
+    
+    loadDashboardData();
+  }
+
+  function showFullDashboard() {
+    const dashboardSection = document.getElementById('dashboard');
+    const coopSection = document.getElementById('chickenCoopManagement');
+    const waterSection = document.getElementById('waterQualityManagement');
+    
+    if (dashboardSection) dashboardSection.style.display = 'block';
+    if (coopSection) coopSection.style.display = 'none';
+    if (waterSection) waterSection.style.display = 'none';
+  }
+
+  // Load and display coops
+  function loadCoops() {
+    const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+    const emptyState = document.getElementById('coopEmptyState');
+    const coopsGrid = document.getElementById('coopsGrid');
+    
+    if (coops.length === 0) {
+      emptyState.style.display = 'block';
+      coopsGrid.style.display = 'none';
+    } else {
+      emptyState.style.display = 'none';
+      coopsGrid.style.display = 'grid';
+      coopsGrid.innerHTML = '';
+      
+      coops.forEach(coop => {
+        const coopCard = createCoopCard(coop);
+        coopsGrid.appendChild(coopCard);
+      });
+    }
+  }
+
+  // Create coop card element
+  function createCoopCard(coop) {
+    const card = document.createElement('div');
+    card.className = 'coop-card';
+    card.dataset.coopId = coop.id;
+    
+    card.innerHTML = `
+      <div class="coop-header">
+        <div class="coop-title">
+          <i class='bx bxs-building-house'></i>
+          ${coop.location}
+        </div>
+        <div class="coop-actions">
+          <button class="coop-action-btn edit-btn" title="Edit">
+            <i class='bx bx-edit'></i>
+          </button>
+          <button class="coop-action-btn delete-btn" title="Delete">
+            <i class='bx bx-trash'></i>
+          </button>
+        </div>
+      </div>
+      <div class="coop-info">
+        <div class="info-row">
+          <i class='bx bx-ruler'></i>
+          <span>Size: ${coop.size} sq ft</span>
+        </div>
+        <div class="info-row">
+          <i class='bx bxs-group'></i>
+          <span>Capacity: ${coop.capacity} birds</span>
+        </div>
+        <div class="info-row">
+          <i class='bx bx-calendar'></i>
+          <span>Added: ${new Date(coop.dateAdded).toLocaleDateString()}</span>
+        </div>
+      </div>
+      <div class="coop-status">
+        <span class="status-badge status-active">
+          <i class='bx bx-check-circle'></i> Active
+        </span>
+      </div>
+      <button class="coop-action-button view-dashboard-btn">
+        <i class='bx bxs-dashboard'></i> View Coop
+      </button>
+    `;
+    
+    // Add event listeners
+    const viewDashboardBtn = card.querySelector('.view-dashboard-btn');
+    viewDashboardBtn.addEventListener('click', () => {
+      showWaterQualityManagement();
+    });
+    
+    const deleteBtn = card.querySelector('.delete-btn');
+    deleteBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to delete this chicken coop?')) {
+        deleteCoop(coop.id);
+      }
+    });
+    
+    const editBtn = card.querySelector('.edit-btn');
+    editBtn.addEventListener('click', () => {
+      openEditCoopModal(coop.id);
+    });
+    
+    return card;
+  }
+
+  // Delete coop
+  function deleteCoop(coopId) {
+    let coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+    coops = coops.filter(c => c.id !== coopId);
+    localStorage.setItem('etee_coops', JSON.stringify(coops));
+    loadCoops();
+    showNotification('Chicken coop deleted successfully!', 'success');
+    
+    // If no coops left, show chicken coop management
+    if (coops.length === 0) {
+      showChickenCoopManagement();
+    }
+  }
+
+  // Add Coop Button and Empty State Button Event Listeners
+  const addCoopBtn = document.getElementById('addCoopBtn');
+  const emptyStateBtn = document.querySelector('.empty-state-btn');
+  
+  if (addCoopBtn) {
+    addCoopBtn.addEventListener('click', () => {
+      openAddCoopModal();
+    });
+  }
+  
+  if (emptyStateBtn) {
+    emptyStateBtn.addEventListener('click', () => {
+      openAddCoopModal();
+    });
+  }
+
+  // Open add coop modal
+  function openAddCoopModal() {
+    const addCoopModal = document.getElementById('addCoopModal');
+    addCoopModal.classList.add('active');
+  }
+
+  // Open edit coop modal
+  function openEditCoopModal(coopId) {
+    const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+    const coop = coops.find(c => c.id === coopId);
+    
+    if (coop) {
+      document.getElementById('editCoopId').value = coop.id;
+      document.getElementById('editCoopLocation').value = coop.location;
+      document.getElementById('editCoopSize').value = coop.size;
+      document.getElementById('editCoopCapacity').value = coop.capacity;
+      
+      const editCoopModal = document.getElementById('editCoopModal');
+      editCoopModal.classList.add('active');
+    }
+  }
+
+  // Close modal function
+  function closeModal(modal) {
+    modal.classList.remove('active');
+    const form = modal.querySelector('form');
+    if (form) {
+      setTimeout(() => form.reset(), 300);
+    }
+  }
+
+  // Add Coop Form Submission
+  const addCoopForm = document.getElementById('addCoopForm');
+  if (addCoopForm) {
+    addCoopForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const location = document.getElementById('coopLocation').value;
+      const size = parseFloat(document.getElementById('coopSize').value);
+      const capacity = parseInt(document.getElementById('coopCapacity').value);
+      
+      const newCoop = {
+        id: Date.now(),
+        location,
+        size,
+        capacity,
+        dateAdded: new Date().toISOString(),
+        status: 'active'
+      };
+      
+      const coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+      coops.push(newCoop);
+      localStorage.setItem('etee_coops', JSON.stringify(coops));
+      
+      closeModal(document.getElementById('addCoopModal'));
+      loadCoops();
+      showNotification('Chicken coop added successfully!', 'success');
+      
+      // If this was the first coop, switch to water quality management
+      if (coops.length === 1) {
+        setTimeout(() => {
+          showWaterQualityManagement();
+        }, 1500);
+      }
+    });
+  }
+
+  // Edit Coop Form Submission
+  const editCoopForm = document.getElementById('editCoopForm');
+  if (editCoopForm) {
+    editCoopForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const coopId = parseInt(document.getElementById('editCoopId').value);
+      const location = document.getElementById('editCoopLocation').value;
+      const size = parseFloat(document.getElementById('editCoopSize').value);
+      const capacity = parseInt(document.getElementById('editCoopCapacity').value);
+      
+      let coops = JSON.parse(localStorage.getItem('etee_coops') || '[]');
+      const coopIndex = coops.findIndex(c => c.id === coopId);
+      
+      if (coopIndex !== -1) {
+        coops[coopIndex] = {
+          ...coops[coopIndex],
+          location,
+          size,
+          capacity
+        };
+        
+        localStorage.setItem('etee_coops', JSON.stringify(coops));
+        closeModal(document.getElementById('editCoopModal'));
+        loadCoops();
+        showNotification('Chicken coop updated successfully!', 'success');
+      }
+    });
+  }
+
+  // Back to Coops Button
+  const backToCoopsBtn = document.getElementById('backToCoopsBtn');
+  if (backToCoopsBtn) {
+    backToCoopsBtn.addEventListener('click', () => {
+      showChickenCoopManagement();
+    });
+  }
+
+  // Water Quality Management Functions
   
   // Function to set zero values
   function setZeroValues() {
-    // Set zero values for cards
-    const temperatureValue = document.querySelector('.card:nth-child(1) .card-value');
+    const temperatureValue = document.querySelector('.temperature-value');
     if (temperatureValue) {
       temperatureValue.textContent = '0°C';
     }
@@ -61,7 +335,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ammoniaValue.textContent = '0 ppm';
     }
     
-    // Set empty state for table
     const tableBody = document.querySelector('tbody');
     if (tableBody) {
       tableBody.innerHTML = `
@@ -75,39 +348,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ===== Sensor Dropdown Filtering =====
-  const sensorSelector = document.getElementById('sensorSelector');
-  
-  if (sensorSelector) {
-    sensorSelector.addEventListener('change', () => {
-      const selectedSensor = sensorSelector.value;
-      const allRows = document.querySelectorAll('tbody tr:not(#emptyStateRow)');
+  // Load dashboard data
+  function loadDashboardData() {
+    const measurements = JSON.parse(localStorage.getItem('etee_measurements') || '[]');
+    
+    if (measurements.length === 0) {
+      setZeroValues();
+    } else {
+      // Sort measurements by timestamp descending
+      measurements.sort((a, b) => b.timestamp - a.timestamp);
       
-      allRows.forEach(row => {
-        if (selectedSensor === 'all' || row.dataset.sensor === selectedSensor) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
-      });
-    });
+      // Update dashboard with most recent measurement
+      updateDashboardData(measurements[0]);
+      
+      // Clear and repopulate the table
+      const tableBody = document.querySelector('tbody');
+      if (tableBody) {
+        tableBody.innerHTML = '';
+        measurements.forEach(measurement => {
+          updateActivityTable(measurement);
+        });
+      }
+    }
   }
 
-  // Chart data selector
-  const chartDataSelector = document.getElementById('chartDataSelector');
-  if (chartDataSelector) {
-    chartDataSelector.addEventListener('change', () => {
-      updateChartDisplay(chartDataSelector.value);
-    });
-  }
-
-  // ===== Data Entry Functionality =====
+  // Data entry functionality
   const addDataBtn = document.getElementById('addDataBtn');
   const dataEntryModal = document.getElementById('dataEntryModal');
   const dataEntryForm = document.getElementById('dataEntryForm');
   const currentDateTimeField = document.getElementById('currentDateTime');
   
-  // Function to open data entry modal
   function openDataModal() {
     const now = new Date();
     const formattedDateTime = now.toLocaleString('en-US', {
@@ -129,59 +399,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
   }
   
-  // Function to close data entry modal
-  function closeDataModal() {
-    dataEntryModal.classList.remove('active');
-    setTimeout(() => {
-      if (dataEntryForm) dataEntryForm.reset();
-    }, 300);
-  }
-
-  // Add event listeners for data entry modal
   if (addDataBtn) {
     addDataBtn.addEventListener('click', openDataModal);
   }
   
-  // Close button event listeners for all modals
-  document.querySelectorAll('.close-button').forEach(button => {
-    button.addEventListener('click', function() {
-      const modal = this.closest('.modal');
-      if (modal) {
-        modal.classList.remove('active');
-        const form = modal.querySelector('form');
-        if (form) {
-          setTimeout(() => form.reset(), 300);
-        }
-      }
-    });
-  });
-  
-  // Cancel button event listeners
-  document.querySelectorAll('.cancel-button').forEach(button => {
-    button.addEventListener('click', function() {
-      const modal = this.closest('.modal');
-      if (modal) {
-        modal.classList.remove('active');
-        const form = modal.querySelector('form');
-        if (form) {
-          setTimeout(() => form.reset(), 300);
-        }
-      }
-    });
-  });
-  
-  // Close modal when clicking outside
-  window.addEventListener('click', (e) => {
-    if (e.target.classList.contains('modal')) {
-      e.target.classList.remove('active');
-      const form = e.target.querySelector('form');
-      if (form) {
-        setTimeout(() => form.reset(), 300);
-      }
-    }
-  });
-  
-  // Data entry form submission handler
   if (dataEntryForm) {
     dataEntryForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -202,6 +423,11 @@ document.addEventListener("DOMContentLoaded", () => {
         ammonia,
       };
       
+      // Save measurement
+      const measurements = JSON.parse(localStorage.getItem('etee_measurements') || '[]');
+      measurements.push(newMeasurement);
+      localStorage.setItem('etee_measurements', JSON.stringify(measurements));
+      
       const submitBtn = dataEntryForm.querySelector('.submit-button');
       if (submitBtn) {
         submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
@@ -215,49 +441,43 @@ document.addEventListener("DOMContentLoaded", () => {
           submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
           submitBtn.classList.remove('success-animation');
         }
-        closeDataModal();
+        closeModal(dataEntryModal);
         showNotification('New measurement data added successfully!', 'success');
       }, 1500);
     });
   }
   
-  // Function to update dashboard with new data
+  // Update dashboard with new data
   function updateDashboardData(measurement) {
-    // Remove empty state row if it exists
     const emptyStateRow = document.getElementById('emptyStateRow');
     if (emptyStateRow) {
       emptyStateRow.remove();
     }
 
-    // Update temperature card
-    const temperatureValue = document.querySelector('.card:nth-child(1) .card-value');
+    const temperatureValue = document.querySelector('.temperature-value');
     if (temperatureValue) {
       temperatureValue.textContent = `${measurement.temperature}°C`;
     }
     
-    // Update humidity card
     const humidityValue = document.querySelector('.humidity-value');
     if (humidityValue) {
       humidityValue.textContent = `${measurement.humidity}%`;
     }
     
-    // Update CO2 card
     const co2Value = document.querySelector('.co2-value');
     if (co2Value) {
       co2Value.textContent = `${measurement.co2} ppm`;
     }
     
-    // Update ammonia card
     const ammoniaValue = document.querySelector('.ammonia-value');
     if (ammoniaValue) {
       ammoniaValue.textContent = `${measurement.ammonia} ppm`;
     }
     
-    // Add record to table
     updateActivityTable(measurement);
   }
   
-  // Function to update activity table with new data
+  // Update activity table
   function updateActivityTable(measurement) {
     const tableBody = document.querySelector('tbody');
     if (!tableBody) return;
@@ -344,7 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
     
-    // Add click event listeners to new view buttons
+    // Add click event listeners to view buttons
     const viewButtons = tableBody.querySelectorAll('.view-btn');
     viewButtons.forEach(btn => {
       if (!btn.hasAttribute('data-listener')) {
@@ -362,7 +582,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Function to show a modal with detailed information about a reading
+  // Sensor dropdown filtering
+  const sensorSelector = document.getElementById('sensorSelector');
+  if (sensorSelector) {
+    sensorSelector.addEventListener('change', () => {
+      const selectedSensor = sensorSelector.value;
+      const allRows = document.querySelectorAll('tbody tr:not(#emptyStateRow)');
+      
+      allRows.forEach(row => {
+        if (selectedSensor === 'all' || row.dataset.sensor === selectedSensor) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  }
+
+  // Chart data selector
+  const chartDataSelector = document.getElementById('chartDataSelector');
+  if (chartDataSelector) {
+    chartDataSelector.addEventListener('change', () => {
+      updateChartDisplay(chartDataSelector.value);
+    });
+  }
+
+  // Chart update function (placeholder)
+  function updateChartDisplay(dataType) {
+    console.log(`Updating chart to display ${dataType} data`);
+    // Implement chart update logic here
+  }
+
+  // Show detail modal
   function showDetailModal(date, activity, value, status, sensorType) {
     // Check if a detail modal already exists and remove it
     const existingModal = document.querySelector('.detail-modal');
@@ -557,19 +808,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 5000);
   }
   
-  // ===== Profile Edit Functionality =====
-  
-  // Profile Edit Elements
+  // Profile Edit Functionality
   const profileEditModal = document.getElementById('profileEditModal');
   const profileEditForm = document.getElementById('profileEditForm');
   const profileImageInput = document.getElementById('profileImage');
   const profilePreview = document.getElementById('profilePreview');
   
-  // Function to open profile edit modal
   function openProfileModal() {
     const savedProfile = JSON.parse(localStorage.getItem('userProfile'));
     
-    // Populate form with current data
     document.getElementById('profileName').value = savedProfile ? savedProfile.name : 'Dja-ver Q. Hassan';
     document.getElementById('profileEmail').value = savedProfile ? savedProfile.email : 'etee@gmail.com';
     document.getElementById('profilePhone').value = savedProfile ? savedProfile.phone : '+1234567890';
@@ -578,14 +825,11 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('userRole').value = savedProfile ? savedProfile.userRole : 'Admin';
     document.getElementById('userID').value = savedProfile ? savedProfile.userID : 'USR-001';
     
-    // Set profile image preview
     profilePreview.src = savedProfile && savedProfile.profileImage ? savedProfile.profileImage : 'admin.png';
     
-    // Show modal
     profileEditModal.classList.add('active');
   }
   
-  // Handle profile image change
   if (profileImageInput) {
     profileImageInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -599,12 +843,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // Handle profile form submission
   if (profileEditForm) {
     profileEditForm.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      // Get form values
       const updatedProfile = {
         name: document.getElementById('profileName').value,
         email: document.getElementById('profileEmail').value,
@@ -616,10 +858,8 @@ document.addEventListener("DOMContentLoaded", () => {
         profileImage: profilePreview.src
       };
       
-      // Save to localStorage
       localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
       
-      // Update sidebar profile using the sidebar component
       sidebar.setProfile({
         name: updatedProfile.name,
         role: updatedProfile.userRole,
@@ -627,12 +867,10 @@ document.addEventListener("DOMContentLoaded", () => {
         image: updatedProfile.profileImage
       });
       
-      // Show success animation
       const submitBtn = profileEditForm.querySelector('.submit-button');
       submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
       submitBtn.classList.add('success-animation');
       
-      // Close modal after animation
       setTimeout(() => {
         submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Changes';
         submitBtn.classList.remove('success-animation');
@@ -641,6 +879,45 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 1500);
     });
   }
+  
+  // Close button event listeners
+  document.querySelectorAll('.close-button').forEach(button => {
+    button.addEventListener('click', function() {
+      const modal = this.closest('.modal');
+      if (modal) {
+        modal.classList.remove('active');
+        const form = modal.querySelector('form');
+        if (form) {
+          setTimeout(() => form.reset(), 300);
+        }
+      }
+    });
+  });
+  
+  // Cancel button event listeners
+  document.querySelectorAll('.cancel-button').forEach(button => {
+    button.addEventListener('click', function() {
+      const modal = this.closest('.modal');
+      if (modal) {
+        modal.classList.remove('active');
+        const form = modal.querySelector('form');
+        if (form) {
+          setTimeout(() => form.reset(), 300);
+        }
+      }
+    });
+  });
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+      e.target.classList.remove('active');
+      const form = e.target.querySelector('form');
+      if (form) {
+        setTimeout(() => form.reset(), 300);
+      }
+    }
+  });
   
   // Enable escape key to close modals
   document.addEventListener('keydown', (e) => {
@@ -655,13 +932,4 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   });
-
-  // Chart update function (placeholder)
-  function updateChartDisplay(dataType) {
-    console.log(`Updating chart to display ${dataType} data`);
-    // Implement chart update logic here
-  }
-  
-  // Initialize dashboard with zero values
-  setZeroValues();
 });
