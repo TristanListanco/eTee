@@ -29,50 +29,40 @@ document.addEventListener('DOMContentLoaded', function() {
   const signupForm = document.getElementById('signup-form');
   
   if (signinForm) {
-    signinForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      // Get form values
-      const email = document.getElementById('login-email').value.trim();
-      const password = document.getElementById('login-password').value.trim();
-      
-      // Basic validation
-      if (email === '' || password === '') {
-        showError('Please fill in all fields');
-        return;
-      }
-      
-      // Check if user exists
-      const users = JSON.parse(localStorage.getItem('etee_users') || '[]');
-      const user = users.find(u => u.email === email && u.password === password);
-      
-      if (!user) {
-        showError('Invalid email or password');
-        return;
-      }
-      
-      // Set current user session
-      const currentUser = {
-        userID: user.userID,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        name: `${user.firstName} ${user.lastName}`, // Combined name for backward compatibility
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
-        address: user.address,
-        dateRegistered: user.dateRegistered
-      };
-      
-      localStorage.setItem('etee_current_user', JSON.stringify(currentUser));
-      
-      showSuccess('Login successful!');
-      
-      // Redirect after a short delay to the integrated dashboard
-      setTimeout(() => {
-        window.location.href = 'Dashboard.html';
-      }, 1000);
-    });
+    // This should be in your sign.js file - modify the sign-in form submit handler:
+signinForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Get form values
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  
+  // Basic validation
+  if (email === '' || password === '') {
+    showError('Please fill in all fields');
+    return;
+  }
+  
+  // Check if user exists
+  const users = JSON.parse(localStorage.getItem('etee_users') || '[]');
+  const user = users.find(u => u.email === email && u.password === password);
+  
+  if (!user) {
+    showError('Invalid email or password');
+    return;
+  }
+  
+  // Set current user session - IMPORTANT: Store the complete user object 
+  // instead of just extracting certain properties
+  localStorage.setItem('etee_current_user', JSON.stringify(user));
+  
+  showSuccess('Login successful!');
+  
+  // Redirect after a short delay to the integrated dashboard
+  setTimeout(() => {
+    window.location.href = 'Dashboard.html';
+  }, 1000);
+});
   }
   
   if (signupForm) {
@@ -86,8 +76,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const password = document.getElementById('register-password').value.trim();
       const phone = document.getElementById('register-phone').value.trim();
       const address = document.getElementById('register-address').value.trim();
-      const role = document.getElementById('register-role').value;
+     
       const agreeTerms = document.getElementById('agree-terms').checked;
+
+      // Normalize the role - capitalize first letter
+    const roleSelect = document.getElementById('register-role');
+   const role = roleSelect.value.charAt(0).toUpperCase() + roleSelect.value.slice(1).toLowerCase();
+  
       
       // Basic validation
       if (firstName === '' || lastName === '' || email === '' || password === '' || phone === '' || address === '' || role === '') {
@@ -122,12 +117,12 @@ document.addEventListener('DOMContentLoaded', function() {
         userID: userID,
         firstName: firstName,
         lastName: lastName,
-        name: `${firstName} ${lastName}`, // Combined name for backward compatibility
+        name: `${firstName} ${lastName}`,
         email: email,
-        password: password, // In production, this should be hashed
+        password: password,
         phone: phone,
         address: address,
-        role: role,
+        role: role, // Using the normalized role
         dateRegistered: new Date().toISOString()
       };
       

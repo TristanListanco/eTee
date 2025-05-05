@@ -1112,60 +1112,139 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Add this function if it doesn't exist already
-function openProfileModal() {
-  const currentUser = window.currentUser;
-  if (!currentUser) return;
-
-  // Populate the form with current user data
-  document.getElementById('profileName').value = currentUser.name || '';
-  document.getElementById('profileEmail').value = currentUser.email || '';
-  document.getElementById('profilePhone').value = currentUser.phone || '';
-  document.getElementById('profileAddress').value = currentUser.address || '';
-  document.getElementById('userRole').value = currentUser.role || 'Operator';
-  document.getElementById('userID').value = currentUser.userID || '';
-  document.getElementById('dateRegistered').value = new Date(currentUser.dateRegistered).toLocaleDateString() || '';
+  function openProfileModal() {
+    const currentUser = window.currentUser;
+    if (!currentUser) return;
   
-  // Show the modal
-  const profileEditModal = document.getElementById('profileEditModal');
-  profileEditModal.classList.add('active');
-}
+    // Split the name into first and last name if not already present
+    let firstName = currentUser.firstName || '';
+    let lastName = currentUser.lastName || '';
+    
+    // If firstName/lastName are not available, split from name
+    if (!firstName && !lastName && currentUser.name) {
+      const nameParts = currentUser.name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+    }
+  
+    // Populate the form fields
+    document.getElementById('profileFirstName').value = firstName;
+    document.getElementById('profileLastName').value = lastName;
+    document.getElementById('profileEmail').value = currentUser.email || '';
+    document.getElementById('profilePhone').value = currentUser.phone || '';
+    document.getElementById('profileAddress').value = currentUser.address || '';
+    
+    // Set the user role correctly
+    const userRoleSelect = document.getElementById('userRole');
+    // Convert role to match option case if needed (e.g., 'admin' to 'Admin')
+    const normalizedRole = currentUser.role ? 
+      currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1).toLowerCase() : 
+      'Operator'; // Default to Operator if no role exists
+    
+    // First check if the exact role exists in options
+    let roleExists = false;
+    for (let i = 0; i < userRoleSelect.options.length; i++) {
+      if (userRoleSelect.options[i].value === currentUser.role) {
+        userRoleSelect.selectedIndex = i;
+        roleExists = true;
+        break;
+      }
+    }
+    
+    // If not found, try with normalized case
+    if (!roleExists) {
+      for (let i = 0; i < userRoleSelect.options.length; i++) {
+        if (userRoleSelect.options[i].value === normalizedRole) {
+          userRoleSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
+    
+    document.getElementById('userID').value = currentUser.userID || '';
+    document.getElementById('dateRegistered').value = currentUser.dateRegistered ? 
+      new Date(currentUser.dateRegistered).toLocaleDateString() : '';
+    
+    // Show the modal
+    const profileEditModal = document.getElementById('profileEditModal');
+    profileEditModal.classList.add('active');
+  }
 
 // Add the form submission handler if it doesn't exist
+
 const profileEditForm = document.getElementById('profileEditForm');
 if (profileEditForm) {
   profileEditForm.addEventListener('submit', function(e) {
     e.preventDefault();
     
+    // Get the current user
+    const currentUser = window.currentUser;
+    if (!currentUser) return;
+    
     // Get the form values
-    const updatedProfile = {
-      ...window.currentUser,
-      name: document.getElementById('profileName').value,
-      email: document.getElementById('profileEmail').value,
-      phone: document.getElementById('profilePhone').value,
-      address: document.getElementById('profileAddress').value,
-      role: document.getElementById('userRole').value
-    };
+    const firstName = document.getElementById('profileFirstName').value.trim();
+    const lastName = document.getElementById('profileLastName').value.trim();
+    const fullName = `${firstName} ${lastName}`.trim();
+    const email = document.getElementById('profileEmail').value.trim();
+    const phone = document.getElementById('profilePhone').value.trim();
+    const address = document.getElementById('profileAddress').value.trim();
+    const role = document.getElementById('userRole').value;
     
-    // Update localStorage
-    localStorage.setItem('etee_current_user', JSON.stringify(updatedProfile));
+    // Get all users from localStorage
+    const users = JSON.parse(localStorage.getItem('etee_users') || '[]');
     
-    // Update the current user object
-    window.currentUser = updatedProfile;
+    // Find the user in the array
+    const userIndex = users.findIndex(u => u.userID === currentUser.userID);
     
-    // Update the sidebar display
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar) {
-      document.getElementById('adminName').textContent = updatedProfile.name;
-      document.getElementById('adminEmail').textContent = updatedProfile.email;
-      document.getElementById('adminRole').textContent = updatedProfile.role;
+    if (userIndex !== -1) {
+      // Update the user in the users array
+      users[userIndex] = {
+        ...users[userIndex],
+        firstName: firstName,
+        lastName: lastName,
+        name: fullName, // Keep the full name for compatibility
+        email: email,
+        phone: phone,
+        address: address,
+        role: role
+      };
+      
+      // Save the updated users array
+      localStorage.setItem('etee_users', JSON.stringify(users));
+      
+      // Update current session
+      const updatedCurrentUser = {
+        ...currentUser,
+        firstName: firstName,
+        lastName: lastName,
+        name: fullName,
+        email: email,
+        phone: phone,
+        address: address,
+        role: role
+      };
+      
+      // Update localStorage for current session
+      localStorage.setItem('etee_current_user', JSON.stringify(updatedCurrentUser));
+      
+      // Update the current user object
+      window.currentUser = updatedCurrentUser;
+      
+      // Update the sidebar display
+      document.getElementById('adminName').textContent = fullName;
+      document.getElementById('adminEmail').textContent = email;
+      document.getElementById('adminRole').textContent = role;
+      
+      // Close the modal
+      const modal = document.getElementById('profileEditModal');
+      modal.classList.remove('active');
+      
+      // Show success notification
+      showNotification('Profile updated successfully!', 'success');
+    } else {
+      // User not found in the users array
+      showNotification('Error updating profile. User not found.', 'error');
     }
-    
-    // Close the modal
-    const modal = document.getElementById('profileEditModal');
-    modal.classList.remove('active');
-    
-    // Show success notification
-    showNotification('Profile updated successfully!', 'success');
   });
 }
 

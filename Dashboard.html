@@ -395,78 +395,83 @@
   </div>
 
   <!-- Profile Edit Modal -->
-  <div id="profileEditModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Edit Profile</h3>
-        <button class="close-button">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="profileEditForm">
-          <div class="profile-image-section">
-            <img src="admin.png" alt="Profile" id="profilePreview">
-            <input type="file" id="profileImage" accept="image/*" style="display: none;">
+<div id="profileEditModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Profile</h3>
+      <button class="close-button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="profileEditForm">
+        <div class="profile-image-section">
+          <img src="admin.png" alt="Profile" id="profilePreview">
+          <input type="file" id="profileImage" accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profileFirstName">First Name:</label>
+            <input type="text" id="profileFirstName" required>
           </div>
           
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profileName">Name:</label>
-              <input type="text" id="profileName" value="Loading..." required>
-            </div>
+          <div class="form-group">
+            <label for="profileLastName">Last Name:</label>
+            <input type="text" id="profileLastName">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profileEmail">Email:</label>
+            <input type="email" id="profileEmail" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profilePhone">Phone Number:</label>
+            <input type="tel" id="profilePhone">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="profileAddress">Address:</label>
+            <input type="text" id="profileAddress">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dateRegistered">Date Registered:</label>
+            <input type="text" id="dateRegistered" readonly>
           </div>
           
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profileEmail">Email:</label>
-              <input type="email" id="profileEmail" value="Loading..." required>
-            </div>
+          <div class="form-group">
+            <label for="userRole">User Role:</label>
+            <select id="userRole">
+              <option value="Admin">Admin</option>
+              <option value="Manager">Manager</option>
+              <option value="Operator">Operator</option>
+            </select>
           </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profilePhone">Phone Number:</label>
-              <input type="tel" id="profilePhone" value="Loading...">
-            </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="userID">User ID:</label>
+            <input type="text" id="userID" readonly>
           </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profileAddress">Address:</label>
-              <input type="text" id="profileAddress" value="Loading...">
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="dateRegistered">Date Registered:</label>
-              <input type="text" id="dateRegistered" value="Loading..." readonly>
-            </div>
-            
-            <div class="form-group">
-              <label for="userRole">User Role:</label>
-              <select id="userRole">
-                <option value="Admin">Admin</option>
-                <option value="Manager">Manager</option>
-                <option value="Operator">Operator</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="userID">User ID:</label>
-              <input type="text" id="userID" value="Loading..." readonly>
-            </div>
-          </div>
-          
-          <div class="form-actions">
-            <button type="button" class="cancel-button">Cancel</button>
-            <button type="submit" class="submit-button"><i class='bx bx-save'></i> Save Changes</button>
-          </div>
-        </form>
-      </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="cancel-button">Cancel</button>
+          <button type="submit" class="submit-button"><i class='bx bx-save'></i> Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
 
   <!-- Sensor Detail Modal -->
   <div id="sensorDetailModal" class="modal">
