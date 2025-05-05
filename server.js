@@ -326,6 +326,50 @@ app.get('/api/sensors', (req, res) => {
   );
 });
 
+// Get sensor readings for a coop
+app.get('/api/readings', (req, res) => {
+  const coopId = req.query.coopId;
+  const limit = parseInt(req.query.limit) || 50;
+  
+  if (!coopId) {
+    return res.status(400).json({ error: "Coop ID is required" });
+  }
+
+  // Modify the query to get readings for a specific coop
+  const query = 'SELECT * FROM SensorReading WHERE CoopID = ? ORDER BY TimeStamp DESC LIMIT ?';
+  
+  connection.query(query, [coopId, limit], (err, results) => {
+    if (err) {
+      console.error('Error fetching readings:', err);
+      return res.status(500).json({ error: "Failed to fetch readings" });
+    }
+    
+    res.json(results);
+  });
+});
+
+// Get a specific coop
+app.get('/api/coops/:id', (req, res) => {
+  const coopId = req.params.id;
+  
+  connection.query(
+    'SELECT * FROM ChickenCoop WHERE CoopID = ?',
+    [coopId],
+    (err, results) => {
+      if (err) {
+        console.error('Error fetching coop:', err);
+        return res.status(500).json({ error: "Failed to fetch coop" });
+      }
+      
+      if (results.length === 0) {
+        return res.status(404).json({ error: "Coop not found" });
+      }
+      
+      res.json(results[0]);
+    }
+  );
+});
+
 // Add a new sensor reading
 app.post('/api/readings', (req, res) => {
   console.log('Received request body:', req.body);
@@ -445,28 +489,30 @@ app.post('/api/readings', (req, res) => {
 });
 // Delete a sensor reading
 app.delete('/api/readings/:id', (req, res) => {
-    const readingId = req.params.id;
+  const readingId = req.params.id;
   
-    connection.query(
-      'DELETE FROM SensorReading WHERE ReadingID = ?',
-      [readingId],
-      (err, result) => {
-        if (err) {
-          console.error('Error deleting reading:', err);
-          return res.status(500).json({ error: "Failed to delete reading" });
-        }
-        
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ error: "Reading not found" });
-        }
-        
-        res.json({
-          success: true,
-          id: parseInt(readingId)
-        });
+  console.log('Deleting reading with ID:', readingId);
+
+  connection.query(
+    'DELETE FROM SensorReading WHERE ReadingID = ?',
+    [readingId],
+    (err, result) => {
+      if (err) {
+        console.error('Error deleting reading:', err);
+        return res.status(500).json({ error: "Failed to delete reading: " + err.message });
       }
-    );
-  });
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Reading not found" });
+      }
+      
+      res.json({
+        success: true,
+        id: parseInt(readingId)
+      });
+    }
+  );
+});
 
 
 // User profile API

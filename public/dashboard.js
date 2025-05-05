@@ -152,16 +152,27 @@ document.addEventListener("DOMContentLoaded", () => {
     if (waterSection) waterSection.style.display = 'block';
     
     if (coopId) {
+      // Set the global currentCoopId variable
       currentCoopId = coopId;
-      const coops = getUserData('etee_coops');
-      const selectedCoop = coops.find(coop => coop.id === coopId);
       
-      if (selectedCoop) {
-        const coopLocationTitle = document.getElementById('coopLocationTitle');
-        if (coopLocationTitle) {
-          coopLocationTitle.textContent = `${selectedCoop.location} Chicken Coop`;
-        }
-      }
+      // Fetch the coop details from the database
+      fetch(`/api/coops/${coopId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch coop details');
+          }
+          return response.json();
+        })
+        .then(coop => {
+          // Update the span with ID "coopLocationTitle" with the coop location
+          const coopLocationTitle = document.getElementById('coopLocationTitle');
+          if (coopLocationTitle) {
+            coopLocationTitle.textContent = `${coop.Location} Chicken Coop`;
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching coop details:', error);
+        });
     }
     
     loadDashboardData();
@@ -633,101 +644,82 @@ if (editCoopForm) {
   }
   
   // Add this function to handle the data entry form submission
-  const dataEntryForm = document.getElementById('dataEntryForm');
-  if (dataEntryForm) {
-    dataEntryForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      
-      if (!currentCoopId) {
-        showNotification('Please select a chicken coop first!', 'error');
-        return;
+// Add this function to handle the data entry form submission
+const dataEntryForm = document.getElementById('dataEntryForm');
+if (dataEntryForm) {
+  dataEntryForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    if (!currentCoopId) {
+      showNotification('Please select a chicken coop first!', 'error');
+      return;
+    }
+    
+    const dateTimeField = document.getElementById('currentDateTime');
+    const dateTime = dateTimeField.value;
+    const temperature = parseFloat(document.getElementById('temperature').value);
+    const humidity = parseFloat(document.getElementById('humidity').value);
+    const co2 = parseInt(document.getElementById('co2').value);
+    const ammonia = parseFloat(document.getElementById('ammonia').value);
+    
+    // Format timestamp for MySQL
+    let formattedTimestamp = dateTime;
+    if (dateTime.includes('T')) {
+      formattedTimestamp = dateTime.replace('T', ' ').split('.')[0];
+    }
+    
+    // Save sensor reading data
+    const readingData = {
+      coopId: currentCoopId,
+      temperature,
+      humidity,
+      co2Level: co2,
+      ammoniaLevel: ammonia,
+      timestamp: formattedTimestamp
+    };
+    
+    // Save the sensor reading
+    fetch('/api/readings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(readingData),
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || 'Failed to save sensor readings');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Successfully saved the reading
+      const submitBtn = dataEntryForm.querySelector('.submit-button');
+      if (submitBtn) {
+        submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
+        submitBtn.classList.add('success-animation');
       }
       
-      const dateTimeField = document.getElementById('currentDateTime');
-      const dateTime = dateTimeField.value;
-      const temperature = parseFloat(document.getElementById('temperature').value);
-      const humidity = parseFloat(document.getElementById('humidity').value);
-      const co2 = parseInt(document.getElementById('co2').value);
-      const ammonia = parseFloat(document.getElementById('ammonia').value);
-      const manureAmount = parseFloat(document.getElementById('manureAmount').value);
+      // Reload dashboard data
+      loadDashboardData();
       
-      // Save sensor reading data
-      const readingData = {
-        coopId: currentCoopId,
-        temperature,
-        humidity,
-        co2Level: co2,
-        ammoniaLevel: ammonia,
-        timestamp: dateTime
-      };
-      
-      // Save manure collection data
-      const manureData = {
-        coopId: currentCoopId,
-        amountCollected: manureAmount,
-        timestamp: dateTime
-      };
-      
-      // First save the sensor reading
-      fetch('/api/readings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(readingData),
-      })
-      .then(response => {
-        if (!response.ok) {
-          return response.json().then(data => {
-            throw new Error(data.error || 'Failed to save sensor readings');
-          });
-        }
-        return response.json();
-      })
-      .then(readingResult => {
-        // Then save the manure log
-        return fetch('/api/manure-logs', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(manureData),
-        });
-      })
-      .then(response => {
-        if (!response.ok) {
-          return response.json().then(data => {
-            throw new Error(data.error || 'Failed to save manure data');
-          });
-        }
-        return response.json();
-      })
-      .then(manureResult => {
-        // Both saved successfully
-        const submitBtn = dataEntryForm.querySelector('.submit-button');
+      setTimeout(() => {
         if (submitBtn) {
-          submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
-          submitBtn.classList.add('success-animation');
+          submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
+          submitBtn.classList.remove('success-animation');
         }
-        
-        // Reload dashboard data
-        loadDashboardData();
-    
-        
-        setTimeout(() => {
-          if (submitBtn) {
-            submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
-            submitBtn.classList.remove('success-animation');
-          }
-          closeModal(document.getElementById('dataEntryModal'));
-          showNotification('New data added successfully!', 'success');
-        }, 1500);
-      })
-      .catch(error => {
-        showNotification(error.message || 'Failed to save data', 'error');
-      });
+        closeModal(document.getElementById('dataEntryModal'));
+        showNotification('New data added successfully!', 'success');
+      }, 1500);
+    })
+    .catch(error => {
+      showNotification(error.message || 'Failed to save data', 'error');
     });
-  }
+  });
+}
+ 
   
   // Update dashboard card values
   function updateDashboardCards(reading) {
@@ -754,104 +746,138 @@ if (editCoopForm) {
   
   
   
-  function updateActivityTable(measurement) {
+  function updateActivityTable(readings) {
     const tableBody = document.querySelector('tbody');
     if (!tableBody) return;
     
-    const now = new Date(measurement.timestamp);
-    const formattedDate = now.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    });
+    // Clear existing rows before adding new ones
+    tableBody.innerHTML = '';
     
-    const formattedTime = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
+    // Check if readings is an array or a single object
+    const readingsArray = Array.isArray(readings) ? readings : [readings];
     
-    const normalRanges = {
-      temperature: { min: 26.0, max: 29.0 },
-      humidity: { min: 50, max: 70 },
-      co2: { min: 350, max: 500 },
-      ammonia: { min: 0, max: 0.25 }
-    };
-    
-    const isNormal = {
-      temperature: measurement.temperature >= normalRanges.temperature.min && 
-                   measurement.temperature <= normalRanges.temperature.max,
-      humidity: measurement.humidity >= normalRanges.humidity.min && 
-                measurement.humidity <= normalRanges.humidity.max,
-      co2: measurement.co2 >= normalRanges.co2.min && 
-           measurement.co2 <= normalRanges.co2.max,
-      ammonia: measurement.ammonia >= normalRanges.ammonia.min && 
-               measurement.ammonia <= normalRanges.ammonia.max
-    };
-    
-    const sensors = [
-      { 
-        type: 'temperature', 
-        label: 'Temperature reading', 
-        value: `${measurement.temperature}°C`,
-        isNormal: isNormal.temperature,
-        readingId: measurement.readingIds?.temperature || generateReadingId('TEMP')
-      },
-      { 
-        type: 'humidity', 
-        label: 'Humidity reading', 
-        value: `${measurement.humidity}%`,
-        isNormal: isNormal.humidity,
-        readingId: measurement.readingIds?.humidity || generateReadingId('HUMID')
-      },
-      { 
-        type: 'co2', 
-        label: 'CO₂ level reading', 
-        value: `${measurement.co2} ppm`,
-        isNormal: isNormal.co2,
-        readingId: measurement.readingIds?.co2 || generateReadingId('CO2')
-      },
-      { 
-        type: 'ammonia', 
-        label: 'Ammonia level reading', 
-        value: `${measurement.ammonia} ppm`,
-        isNormal: isNormal.ammonia,
-        readingId: measurement.readingIds?.ammonia || generateReadingId('AMM')
-      }
-    ];
-    
-    sensors.forEach(sensor => {
-      const newRow = document.createElement('tr');
-      newRow.dataset.sensor = sensor.type;
-      newRow.dataset.readingId = sensor.readingId;
+    readingsArray.forEach(reading => {
+      // Log to debug the reading format
+      console.log('Processing reading:', reading);
       
-      newRow.innerHTML = `
-        <td>${formattedDate} • ${formattedTime}</td>
-        <td>${sensor.readingId}</td>
-        <td>${sensor.value}</td>
-        <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
-        <td style="text-align: center;">
-          <i class='bx bx-trash delete-icon' title='Delete'></i>
-        </td>
-      `;
-  
-      // Add click event to the delete icon
-      const deleteIcon = newRow.querySelector('.delete-icon');
-      deleteIcon.addEventListener('click', (e) => {
-        e.stopPropagation();
-        showDeleteModal('sensor', measurement.id, sensor.type);
-      });
+      try {
+        // Handle database format (capital first letters) or client format
+        const readingId = reading.ReadingID || reading.id;
+        const temperature = reading.Temperature !== undefined ? reading.Temperature : reading.temperature;
+        const humidity = reading.Humidity !== undefined ? reading.Humidity : reading.humidity;
+        const co2 = reading.CO2Level !== undefined ? reading.CO2Level : reading.co2Level || reading.co2;
+        const ammonia = reading.AmmoniaLevel !== undefined ? reading.AmmoniaLevel : reading.ammoniaLevel || reading.ammonia;
+        
+        // Parse date from either format
+        let timestamp;
+        if (reading.TimeStamp) {
+          timestamp = new Date(reading.TimeStamp);
+        } else if (reading.timestamp) {
+          timestamp = new Date(reading.timestamp);
+        } else {
+          timestamp = new Date(); // Fallback
+        }
+        
+        const formattedDate = timestamp.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        });
+        
+        const formattedTime = timestamp.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+        
+        const normalRanges = {
+          temperature: { min: 26.0, max: 29.0 },
+          humidity: { min: 50, max: 70 },
+          co2: { min: 350, max: 500 },
+          ammonia: { min: 0, max: 0.25 }
+        };
+        
+        const isNormal = {
+          temperature: temperature >= normalRanges.temperature.min && 
+                       temperature <= normalRanges.temperature.max,
+          humidity: humidity >= normalRanges.humidity.min && 
+                    humidity <= normalRanges.humidity.max,
+          co2: co2 >= normalRanges.co2.min && 
+               co2 <= normalRanges.co2.max,
+          ammonia: ammonia >= normalRanges.ammonia.min && 
+                   ammonia <= normalRanges.ammonia.max
+        };
+        
+        // Generate row data for each sensor type
+        const sensors = [
+          { 
+            type: 'temperature', 
+            label: 'Temperature reading', 
+            value: `${temperature}°C`,
+            isNormal: isNormal.temperature,
+            readingId: `TEMP-${readingId}`
+          },
+          { 
+            type: 'humidity', 
+            label: 'Humidity reading', 
+            value: `${humidity}%`,
+            isNormal: isNormal.humidity,
+            readingId: `HUMID-${readingId}`
+          },
+          { 
+            type: 'co2', 
+            label: 'CO₂ level reading', 
+            value: `${co2} ppm`,
+            isNormal: isNormal.co2,
+            readingId: `CO2-${readingId}`
+          },
+          { 
+            type: 'ammonia', 
+            label: 'Ammonia level reading', 
+            value: `${ammonia} ppm`,
+            isNormal: isNormal.ammonia,
+            readingId: `AMM-${readingId}`
+          }
+        ];
+        
+        // Get selected sensor type
+        const sensorType = document.getElementById('sensorSelector').value;
+        
+        sensors.forEach(sensor => {
+          // Skip sensors that don't match the selected filter
+          if (sensorType !== 'all' && sensorType !== sensor.type) {
+            return;
+          }
+          
+          const newRow = document.createElement('tr');
+          newRow.dataset.sensor = sensor.type;
+          newRow.dataset.readingId = readingId;
+          
+          newRow.innerHTML = `
+            <td>${formattedDate} • ${formattedTime}</td>
+            <td>${sensor.readingId}</td>
+            <td>${sensor.value}</td>
+            <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
+            <td style="text-align: center;">
+              <i class='bx bx-trash delete-icon' title='Delete'></i>
+            </td>
+          `;
       
-      if (tableBody.firstChild) {
-        tableBody.insertBefore(newRow, tableBody.firstChild);
-      } else {
-        tableBody.appendChild(newRow);
-      }
-      
-      // Check current chart filter
-      const chartDataSelector = document.getElementById('chartDataSelector');
-      if (chartDataSelector && chartDataSelector.value !== sensor.type) {
-        newRow.style.display = 'none';
+          // Add click event to the delete icon
+          const deleteIcon = newRow.querySelector('.delete-icon');
+          deleteIcon.addEventListener('click', () => {
+            deleteSensorReading(readingId);
+          });
+          
+          // Add to top of table
+          if (tableBody.firstChild) {
+            tableBody.insertBefore(newRow, tableBody.firstChild);
+          } else {
+            tableBody.appendChild(newRow);
+          }
+        });
+      } catch (error) {
+        console.error('Error processing reading:', error, reading);
       }
     });
   }
@@ -912,7 +938,7 @@ if (editCoopForm) {
       if (type === 'sensor') {
         deleteSensorReading(id, sensorType);
       } else {
-     null;
+     
       }
       modal.classList.remove('active');
       setTimeout(() => {
@@ -940,14 +966,43 @@ if (editCoopForm) {
     });
   }
 
-  function deleteSensorReading(measurementId, sensorType) {
-    let measurements = getUserData('etee_measurements');
-    measurements = measurements.filter(m => m.id !== measurementId);
-    setUserData('etee_measurements', measurements);
+  function deleteSensorReading(readingId) {
+    console.log('Deleting reading with ID:', readingId);
     
-    loadDashboardData();
-    showNotification('Sensor reading deleted successfully!', 'success');
+    fetch(`/api/readings/${readingId}`, {
+      method: 'DELETE'
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || 'Failed to delete reading');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Delete response:', data);
+      
+      if (data.success) {
+        // Remove rows with this reading ID
+        const rows = document.querySelectorAll(`tr[data-reading-id="${readingId}"]`);
+        rows.forEach(row => row.remove());
+        
+        // Also refresh the data to update the dashboard cards
+        loadDashboardData();
+        
+        showNotification('Reading deleted successfully!', 'success');
+      } else {
+        showNotification(data.error || 'Failed to delete reading', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting reading:', error);
+      showNotification('Failed to delete reading: ' + error.message, 'error');
+    });
   }
+
+ 
 
   const sensorSelector = document.getElementById('sensorSelector');
   if (sensorSelector) {
@@ -1266,25 +1321,6 @@ function deleteSensorReading(readingId) {
   });
 }
 
-// Delete manure log
-function deleteManureLog(logId) {
-  fetch(`/api/manure-logs/${logId}`, {
-    method: 'DELETE'
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
- 
-      showNotification('Manure log deleted successfully!', 'success');
-    } else {
-      showNotification('Failed to delete manure log', 'error');
-    }
-  })
-  .catch(error => {
-    console.error('Error deleting manure log:', error);
-    showNotification('Failed to delete manure log', 'error');
-  });
-}
 
 function generateReadingId(prefix) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
