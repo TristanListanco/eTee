@@ -59,6 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
         active: true
       },
       {
+        text: 'About',
+        icon: 'bx bx-info-circle',
+        href: '#about',
+        active: false
+      },
+      {
         text: 'Sign out',
         icon: 'bx bxs-log-out',
         href: '#sign-out',
@@ -80,6 +86,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (confirm('Are you sure you want to sign out?')) {
           localStorage.removeItem('etee_current_user');
           window.location.href = 'signin.html';
+        }
+      } else if (item.href === '#about') {
+        e.preventDefault();
+        if (window.aboutModal) {
+          window.aboutModal.open();
+        } else {
+          openAboutModal();
         }
       }
     }
@@ -554,7 +567,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tableBody) {
         tableBody.innerHTML = `
           <tr id="emptyStateRow">
-            <td colspan="5" style="text-align: center; padding: 2rem;">
+            <td colspan="6" style="text-align: center; padding: 2rem;">
               <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
               <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
             </td>
@@ -846,50 +859,19 @@ document.addEventListener("DOMContentLoaded", () => {
       newRow.innerHTML = `
         <td>${formattedDate} • ${formattedTime}</td>
         <td>${sensor.readingId}</td>
+        <td>${sensor.deviceId}</td>
         <td>${sensor.value}</td>
         <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
-        <td style="text-align: center;"></td>
+        <td style="text-align: center;">
+          <i class='bx bx-trash delete-icon' title='Delete'></i>
+        </td>
       `;
   
-      // Add hover delete functionality
-      newRow.addEventListener('mouseenter', () => {
-        if (!newRow.querySelector('.delete-icon')) {
-          const deleteIcon = document.createElement('i');
-          deleteIcon.className = 'bx bx-trash delete-icon';
-          deleteIcon.style.cssText = `
-            color: var(--danger-color);
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: all 0.2s ease;
-            opacity: 0;
-            transform: scale(0.8);
-          `;
-          
-          newRow.querySelector('td:last-child').appendChild(deleteIcon);
-          
-          setTimeout(() => {
-            deleteIcon.style.opacity = '1';
-            deleteIcon.style.transform = 'scale(1)';
-          }, 10);
-          
-          deleteIcon.addEventListener('click', (e) => {
-            e.stopPropagation();
-            showDeleteModal('sensor', measurement.id, sensor.type);
-          });
-        }
-      });
-      
-      newRow.addEventListener('mouseleave', () => {
-        const deleteIcon = newRow.querySelector('.delete-icon');
-        if (deleteIcon) {
-          deleteIcon.style.opacity = '0';
-          deleteIcon.style.transform = 'scale(0.8)';
-          setTimeout(() => {
-            if (deleteIcon.parentNode) {
-              deleteIcon.remove();
-            }
-          }, 200);
-        }
+      // Add click event to the delete icon
+      const deleteIcon = newRow.querySelector('.delete-icon');
+      deleteIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showDeleteModal('sensor', measurement.id, sensor.type);
       });
       
       if (tableBody.firstChild) {
@@ -919,48 +901,16 @@ document.addEventListener("DOMContentLoaded", () => {
       <td>${jsonDate}</td>
       <td>LOG-${manureLog.logId}</td>
       <td>${manureLog.amountCollected.toFixed(2)} kg</td>
-      <td style="text-align: center;"></td>
+      <td style="text-align: center;">
+        <i class='bx bx-trash delete-icon' title='Delete'></i>
+      </td>
     `;
     
-    // Add hover delete functionality
-    newRow.addEventListener('mouseenter', () => {
-      if (!newRow.querySelector('.delete-icon')) {
-        const deleteIcon = document.createElement('i');
-        deleteIcon.className = 'bx bx-trash delete-icon';
-        deleteIcon.style.cssText = `
-          color: var(--danger-color);
-          cursor: pointer;
-          font-size: 1.2rem;
-          transition: all 0.2s ease;
-          opacity: 0;
-          transform: scale(0.8);
-        `;
-        
-        newRow.querySelector('td:last-child').appendChild(deleteIcon);
-        
-        setTimeout(() => {
-          deleteIcon.style.opacity = '1';
-          deleteIcon.style.transform = 'scale(1)';
-        }, 10);
-        
-        deleteIcon.addEventListener('click', (e) => {
-          e.stopPropagation();
-          showDeleteModal('manure', manureLog.logId);
-        });
-      }
-    });
-    
-    newRow.addEventListener('mouseleave', () => {
-      const deleteIcon = newRow.querySelector('.delete-icon');
-      if (deleteIcon) {
-        deleteIcon.style.opacity = '0';
-        deleteIcon.style.transform = 'scale(0.8)';
-        setTimeout(() => {
-          if (deleteIcon.parentNode) {
-            deleteIcon.remove();
-          }
-        }, 200);
-      }
+    // Add click event to the delete icon
+    const deleteIcon = newRow.querySelector('.delete-icon');
+    deleteIcon.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showDeleteModal('manure', manureLog.logId);
     });
     
     if (manureTableBody.firstChild) {

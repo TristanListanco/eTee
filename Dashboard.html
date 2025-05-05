@@ -196,25 +196,26 @@
             </div>
           </div>
           <div class="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Date & Time</th>
-                  <th>Reading ID</th>
-                  <th>Value</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr id="emptyStateRow">
-                  <td colspan="5" style="text-align: center; padding: 2rem;">
-                    <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-                    <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+           <table>
+  <thead>
+    <tr>
+      <th>Date & Time</th>
+      <th>Reading ID</th>
+      <th>Device ID</th>
+      <th>Value</th>
+      <th>Status</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr id="emptyStateRow">
+      <td colspan="6" style="text-align: center; padding: 2rem;">
+        <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+        <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+      </td>
+    </tr>
+  </tbody>
+</table>
           </div>
         </section>
         
@@ -480,9 +481,83 @@
     </div>
   </div>
 
+  <!-- Add this modal to your Dashboard.html -->
+<div id="aboutModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class='bx bx-info-circle'></i> About ETee</h3>
+      <button class="close-button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="about-content">
+        <div class="about-logo">
+          <img src="SISSLOGO.jpg" alt="ETee Logo" class="about-logo-img">
+          <h2>Smart Chicken Coop Monitoring System</h2>
+        </div>
+        
+        <div class="about-description">
+          <p>ETee is an innovative solution for monitoring chicken coop environments, 
+             providing real-time data on temperature, humidity, CO₂, and ammonia levels 
+             to ensure optimal conditions for poultry health.</p>
+        </div>
+        
+        <div class="developers-section">
+          <h3><i class='bx bx-code-alt'></i> Development Team</h3>
+          <div class="developers-grid">
+            <div class="developer-card">
+              <div class="developer-icon">
+                <i class='bx bx-user'></i>
+              </div>
+              <h4>Tristan E. Listanco</h4>
+              <p>Developer</p>
+            </div>
+            
+            <div class="developer-card">
+              <div class="developer-icon">
+                <i class='bx bx-user'></i>
+              </div>
+              <h4>Shanice Reih Tanque</h4>
+              <p>Developer</p>
+            </div>
+            
+            <div class="developer-card">
+              <div class="developer-icon">
+                <i class='bx bx-user'></i>
+              </div>
+              <h4>Dja-ver Hassan</h4>
+              <p>Developer</p>
+            </div>
+            
+            <div class="developer-card">
+              <div class="developer-icon">
+                <i class='bx bx-user'></i>
+              </div>
+              <h4>Phoebien Canete</h4>
+              <p>Developer</p>
+            </div>
+            
+            <div class="developer-card">
+              <div class="developer-icon">
+                <i class='bx bx-user'></i>
+              </div>
+              <h4>Mary Grace Soronoio</h4>
+              <p>Developer</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="about-footer">
+          <p>© 2025 ETee - All rights reserved</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
   <!-- Sidebar JavaScript -->
   <script src="sidebar.js"></script>
   <!-- Integrated Dashboard JavaScript -->
   <script src="dashboard.js"></script>
+  <script src="about.js"></script>
 </body>
 </html>
