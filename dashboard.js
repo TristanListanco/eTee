@@ -290,6 +290,10 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
       <div class="coop-info">
         <div class="info-row">
+          <i class='bx bx-id-card'></i>
+          <span>Coop ID: ${coop.id}</span>
+        </div>
+        <div class="info-row">
           <i class='bx bx-ruler'></i>
           <span>Size: ${coop.size} sq ft</span>
         </div>
@@ -312,6 +316,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </button>
     `;
     
+    // Add event handlers (rest of the function remains the same)
     const viewDashboardBtn = card.querySelector('.view-dashboard-btn');
     viewDashboardBtn.addEventListener('click', () => {
       showWaterQualityManagement(coop.id);
@@ -609,7 +614,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (coopManureLogs.length === 0) {
         manureTableBody.innerHTML = `
           <tr id="manureEmptyStateRow">
-            <td colspan="4" style="text-align: center; padding: 2rem;">
+            <td colspan="5" style="text-align: center; padding: 2rem;">
               <i class='bx bx-package' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
               <span style="color: var(--text-light);">No manure collection records available. Click "Add Data" to record collections.</span>
             </td>
@@ -624,7 +629,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   }
-
   const addDataBtn = document.getElementById('addDataBtn');
   const dataEntryModal = document.getElementById('dataEntryModal');
   const dataEntryForm = document.getElementById('dataEntryForm');
@@ -900,6 +904,7 @@ document.addEventListener("DOMContentLoaded", () => {
     newRow.innerHTML = `
       <td>${jsonDate}</td>
       <td>LOG-${manureLog.logId}</td>
+      <td>${manureLog.coopId}</td>
       <td>${manureLog.amountCollected.toFixed(2)} kg</td>
       <td style="text-align: center;">
         <i class='bx bx-trash delete-icon' title='Delete'></i>

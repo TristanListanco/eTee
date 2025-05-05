@@ -185,6 +185,13 @@ body {
   opacity: 1;
 }
 
+/* Update the column widths for manure management table */
+#manureTableBody th:nth-child(1), #manureTableBody td:nth-child(1) { width: 25%; } /* Date & Time */
+#manureTableBody th:nth-child(2), #manureTableBody td:nth-child(2) { width: 20%; } /* Log ID */
+#manureTableBody th:nth-child(3), #manureTableBody td:nth-child(3) { width: 15%; } /* Coop ID */
+#manureTableBody th:nth-child(4), #manureTableBody td:nth-child(4) { width: 25%; } /* Amount Collected */
+#manureTableBody th:nth-child(5), #manureTableBody td:nth-child(5) { width: 15%; text-align: center; } /* Actions */
+
 
 
 .manure-card::after {
@@ -242,6 +249,23 @@ body {
 
 .sensor-item:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+.coop-id-tag {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-weight: normal;
+  margin-left: 0.5rem;
+  background-color: rgba(var(--primary-color-rgb, 255, 136, 0), 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  vertical-align: middle;
+}
+
+/* Make the ID row stand out a bit */
+.info-row:first-child {
+  font-weight: 500;
+  color: var(--primary-color);
 }
 
 .filter-btn {
