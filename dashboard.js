@@ -1161,6 +1161,64 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 5000);
   }
 
+  // Add this function if it doesn't exist already
+function openProfileModal() {
+  const currentUser = window.currentUser;
+  if (!currentUser) return;
+
+  // Populate the form with current user data
+  document.getElementById('profileName').value = currentUser.name || '';
+  document.getElementById('profileEmail').value = currentUser.email || '';
+  document.getElementById('profilePhone').value = currentUser.phone || '';
+  document.getElementById('profileAddress').value = currentUser.address || '';
+  document.getElementById('userRole').value = currentUser.role || 'Operator';
+  document.getElementById('userID').value = currentUser.userID || '';
+  document.getElementById('dateRegistered').value = new Date(currentUser.dateRegistered).toLocaleDateString() || '';
+  
+  // Show the modal
+  const profileEditModal = document.getElementById('profileEditModal');
+  profileEditModal.classList.add('active');
+}
+
+// Add the form submission handler if it doesn't exist
+const profileEditForm = document.getElementById('profileEditForm');
+if (profileEditForm) {
+  profileEditForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Get the form values
+    const updatedProfile = {
+      ...window.currentUser,
+      name: document.getElementById('profileName').value,
+      email: document.getElementById('profileEmail').value,
+      phone: document.getElementById('profilePhone').value,
+      address: document.getElementById('profileAddress').value,
+      role: document.getElementById('userRole').value
+    };
+    
+    // Update localStorage
+    localStorage.setItem('etee_current_user', JSON.stringify(updatedProfile));
+    
+    // Update the current user object
+    window.currentUser = updatedProfile;
+    
+    // Update the sidebar display
+    const sidebar = document.querySelector('.sidebar');
+    if (sidebar) {
+      document.getElementById('adminName').textContent = updatedProfile.name;
+      document.getElementById('adminEmail').textContent = updatedProfile.email;
+      document.getElementById('adminRole').textContent = updatedProfile.role;
+    }
+    
+    // Close the modal
+    const modal = document.getElementById('profileEditModal');
+    modal.classList.remove('active');
+    
+    // Show success notification
+    showNotification('Profile updated successfully!', 'success');
+  });
+}
+
   // Close button event listeners
   document.querySelectorAll('.close-button').forEach(button => {
     button.addEventListener('click', function() {
