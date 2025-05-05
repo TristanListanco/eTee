@@ -848,9 +848,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <td>${sensor.readingId}</td>
         <td>${sensor.value}</td>
         <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
-        <td><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
+        <td style="text-align: center;"></td>
       `;
-
+  
+      // Add hover delete functionality
       newRow.addEventListener('mouseenter', () => {
         if (!newRow.querySelector('.delete-icon')) {
           const deleteIcon = document.createElement('i');
@@ -858,7 +859,6 @@ document.addEventListener("DOMContentLoaded", () => {
           deleteIcon.style.cssText = `
             color: var(--danger-color);
             cursor: pointer;
-            margin-left: 10px;
             font-size: 1.2rem;
             transition: all 0.2s ease;
             opacity: 0;
@@ -898,26 +898,10 @@ document.addEventListener("DOMContentLoaded", () => {
         tableBody.appendChild(newRow);
       }
       
-      const sensorSelector = document.getElementById('sensorSelector');
-      if (sensorSelector && sensorSelector.value !== 'all' && newRow.dataset.sensor !== sensorSelector.value) {
+      // Check current chart filter
+      const chartDataSelector = document.getElementById('chartDataSelector');
+      if (chartDataSelector && chartDataSelector.value !== sensor.type) {
         newRow.style.display = 'none';
-      }
-    });
-    
-    const viewButtons = tableBody.querySelectorAll('.view-btn');
-    viewButtons.forEach(btn => {
-      if (!btn.hasAttribute('data-listener')) {
-        btn.setAttribute('data-listener', 'true');
-        btn.addEventListener('click', function() {
-          const row = this.closest('tr');
-          const date = row.cells[0].textContent;
-          const readingId = row.dataset.readingId;
-          const deviceId = row.dataset.deviceId;
-          const value = row.cells[2].textContent;
-          const status = row.cells[3].textContent;
-          
-          showDetailModal(date, readingId, deviceId, value, status, row.dataset.sensor);
-        });
       }
     });
   }
@@ -935,9 +919,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <td>${jsonDate}</td>
       <td>LOG-${manureLog.logId}</td>
       <td>${manureLog.amountCollected.toFixed(2)} kg</td>
-      <td style="text-align: center;"><button class="view-btn"><i class='bx bx-show'></i> View</button></td>
+      <td style="text-align: center;"></td>
     `;
     
+    // Add hover delete functionality
     newRow.addEventListener('mouseenter', () => {
       if (!newRow.querySelector('.delete-icon')) {
         const deleteIcon = document.createElement('i');
@@ -945,7 +930,6 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteIcon.style.cssText = `
           color: var(--danger-color);
           cursor: pointer;
-          margin-left: 10px;
           font-size: 1.2rem;
           transition: all 0.2s ease;
           opacity: 0;
@@ -984,11 +968,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       manureTableBody.appendChild(newRow);
     }
-    
-    const viewBtn = newRow.querySelector('.view-btn');
-    viewBtn.addEventListener('click', function() {
-      showManureDetailModal(manureLog);
-    });
   }
 
   function showDeleteModal(type, id, sensorType = null) {
