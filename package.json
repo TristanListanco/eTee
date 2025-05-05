@@ -1,0 +1,27 @@
+{
+  "name": "etee",
+  "version": "1.0.0",
+  "main": "about.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TristanListanco/eTee.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TristanListanco/eTee/issues"
+  },
+  "homepage": "https://github.com/TristanListanco/eTee#readme",
+  "description": "",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "chart.js": "^4.4.9",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mysql": "^2.18.1"
+  }
+}
