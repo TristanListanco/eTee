@@ -1,3 +1,13 @@
+<script>
+  // Authentication check
+  (function() {
+    const currentUser = localStorage.getItem('etee_current_user');
+    if (!currentUser) {
+      window.location.href = 'signin.html';
+    }
+  })();
+</script>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,36 +138,10 @@
             <div class="card-description">Ammonia concentration</div>
           </div>
           
-          <!-- Manure Collection Card -->
-          <div class="card manure-card">
-            <div class="card-header">
-              <div class="card-title">
-                <i class='bx bxs-package'></i>Manure Collection
-              </div>
-            </div>
-            <div class="card-value manure-value">0 kg</div>
-            <div class="card-description">Total manure collected today</div>
-          </div>
+      
         </div>
 
-           <!-- Sensor Devices Card -->
-           <div class="card sensor-card" style="cursor: pointer;" id="sensorDevicesCard">
-            <div class="card-header">
-              <div class="card-title">
-                <i class='bx bxs-chip'></i>Sensor Log Information
-              </div>
-             
-            </div>
-            <div class="card-description" style="margin-bottom: 1rem;">Monitor your connected devices and sensors</div>
-            <div class="sensor-devices-list" id="sensorDevicesList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-              <!-- Sensor devices will be dynamically added here -->
-            </div>
-            <div id="sensorEmptyState" style="text-align: center; padding: 2rem; display: none;">
-              <i class='bx bxs-chip' style="font-size: 2rem; color: var(--text-light); margin-bottom: 0.5rem;"></i>
-              <p style="color: var(--text-light);">No sensor devices found for this coop.</p>
-            </div>
-          </div>
-  
+        
         <!-- Chart -->
         <div class="chart-container">
           <div class="chart-header">
@@ -168,7 +152,6 @@
                 <option value="humidity">Humidity</option>
                 <option value="co2">CO₂ Level</option>
                 <option value="ammonia">Ammonia Level</option>
-                <option value="manure">Manure Collection</option>
               </select>
             </div>
           </div>
@@ -201,7 +184,6 @@
     <tr>
       <th>Date & Time</th>
       <th>Reading ID</th>
-      <th>Device ID</th>
       <th>Value</th>
       <th>Status</th>
       <th>Actions</th>
@@ -220,33 +202,7 @@
         </section>
         
        
-<!-- Manure Management Section -->
-<section class="data-section" style="margin-top: 2rem;">
-  <div class="section-header">
-    <h2><i class='bx bx-package'></i>Manure Management</h2>
-  </div>
-  <div class="table-wrapper">
-    <table>
-      <thead>
-        <tr>
-          <th>Date & Time</th>
-          <th>Log ID</th>
-          <th>Coop ID</th>
-          <th>Amount Collected (kg)</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="manureTableBody">
-        <tr id="manureEmptyStateRow">
-          <td colspan="5" style="text-align: center; padding: 2rem;">
-            <i class='bx bx-package' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-            <span style="color: var(--text-light);">No manure collection records available. Click "Add Data" to record collections.</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
+
       </div>
     </main>
   </div>
@@ -372,19 +328,6 @@
               <input type="number" id="ammonia" step="0.01" min="0" max="100" required>
             </div>
           </div>
-          
-          <h4 style="margin-top: 1.5rem; margin-bottom: 1rem; color: var(--text-color);">Manure Collection</h4>
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="manureAmount">Amount Collected (kg):</label>
-              <input type="number" id="manureAmount" step="0.01" min="0" max="1000" required>
-            </div>
-            
-            
-          </div>
-          
-          
           
           <div class="form-actions">
             <button type="button" class="cancel-button">Cancel</button>

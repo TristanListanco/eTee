@@ -112,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setUserData('etee_sensor_devices', []);
   }
 
-  ensureSensorsForAllCoops();
 
   // Global variable to store the currently selected coop
   let currentCoopId = null;
@@ -166,8 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     loadDashboardData();
-    loadManureData();
-    loadSensorData();
+
   }
 
   function loadSensorData() {
@@ -187,70 +185,58 @@ document.addEventListener("DOMContentLoaded", () => {
       sensorDevicesList.innerHTML = '';
       
       coopSensors.forEach(sensor => {
-        const sensorItem = createSensorItem(sensor);
+ 
         sensorDevicesList.appendChild(sensorItem);
       });
     }
   }
 
-  function createSensorItem(sensor) {
-    const item = document.createElement('div');
-    item.className = 'sensor-item';
-    item.style.cssText = `
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 6px;
-      transition: background-color 0.2s;
-    `;
-    
-    item.addEventListener('mouseenter', () => {
-      item.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-    });
-    
-    item.addEventListener('mouseleave', () => {
-      item.style.backgroundColor = 'transparent';
-    });
-    
-    const statusColor = sensor.status.toLowerCase() === 'active' ? '#22c55e' : '#ef4444';
-    
-    item.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 0.5rem;">
-        <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${statusColor};"></div>
-        <div>
-          <div style="font-weight: 600; color: var(--text-color);">${sensor.deviceType}</div>
-          <div style="font-size: 0.875rem; color: var(--text-light);">#${sensor.modelNumber}</div>
-        </div>
-      </div>
-    `;
-    
-    item.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showSensorDetailModal(sensor);
-    });
-    
-    return item;
-  }
+  
 
   function loadCoops() {
-    const coops = getUserData('etee_coops');
-    const emptyState = document.getElementById('coopEmptyState');
-    const coopsGrid = document.getElementById('coopsGrid');
+    const currentUser = window.currentUser;
+    if (!currentUser) return;
     
-    if (coops.length === 0) {
-      emptyState.style.display = 'block';
-      coopsGrid.style.display = 'none';
-    } else {
-      emptyState.style.display = 'none';
-      coopsGrid.style.display = 'grid';
-      coopsGrid.innerHTML = '';
-      
-      coops.forEach(coop => {
-        const coopCard = createCoopCard(coop);
-        coopsGrid.appendChild(coopCard);
+    fetch(`/api/coops?userId=${currentUser.userID}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch coops');
+        }
+        return response.json();
+      })
+      .then(coops => {
+        const emptyState = document.getElementById('coopEmptyState');
+        const coopsGrid = document.getElementById('coopsGrid');
+        
+        if (coops.length === 0) {
+          emptyState.style.display = 'block';
+          coopsGrid.style.display = 'none';
+        } else {
+          emptyState.style.display = 'none';
+          coopsGrid.style.display = 'grid';
+          coopsGrid.innerHTML = '';
+          
+          coops.forEach(coop => {
+            // Convert the database field names to match your frontend code
+            const coopData = {
+              id: coop.CoopID,
+              location: coop.Location,
+              size: coop.Size,
+              capacity: coop.Capacity,
+              dateAdded: coop.DateInstalled,
+              status: coop.Status
+            };
+            
+            const coopCard = createCoopCard(coopData);
+            coopsGrid.appendChild(coopCard);
+          });
+        }
+        updateCoopManagementTitle();
+      })
+      .catch(error => {
+        console.error('Error fetching coops:', error);
+        showNotification('Failed to load chicken coops', 'error');
       });
-    }
-    updateCoopManagementTitle();
-
   }
 
   function updateCoopManagementTitle() {
@@ -337,76 +323,44 @@ document.addEventListener("DOMContentLoaded", () => {
     return card;
   }
 
-  function createPredefinedSensors(coopId) {
-    const sensorDevices = getUserData('etee_sensor_devices');
-    
-    const predefinedSensors = [
-      {
-        deviceId: `TEMP-${coopId}-001`,
-        coopId: coopId,
-        deviceType: 'Temperature Sensor',
-        modelNumber: 'DHT22-PRO',
-        installationDate: new Date().toISOString(),
-        status: 'Active'
-      },
-      {
-        deviceId: `HUMID-${coopId}-001`,
-        coopId: coopId,
-        deviceType: 'Humidity Sensor',
-        modelNumber: 'DHT22-PRO',
-        installationDate: new Date().toISOString(),
-        status: 'Active'
-      },
-      {
-        deviceId: `CO2-${coopId}-001`,
-        coopId: coopId,
-        deviceType: 'CO2 Sensor',
-        modelNumber: 'MH-Z19B',
-        installationDate: new Date().toISOString(),
-        status: 'Active'
-      },
-      {
-        deviceId: `AMM-${coopId}-001`,
-        coopId: coopId,
-        deviceType: 'Ammonia Sensor',
-        modelNumber: 'MQ-137',
-        installationDate: new Date().toISOString(),
-        status: 'Active'
-      }
-    ];
-    
-    predefinedSensors.forEach(sensor => {
-      sensorDevices.push(sensor);
-    });
-    
-    setUserData('etee_sensor_devices', sensorDevices);
-  }
 
-  function ensureSensorsForAllCoops() {
-    const coops = getUserData('etee_coops');
-    const sensorDevices = getUserData('etee_sensor_devices');
-    
-    coops.forEach(coop => {
-      const coopSensors = sensorDevices.filter(sensor => sensor.coopId === coop.id);
-      
-      if (coopSensors.length === 0) {
-        createPredefinedSensors(coop.id);
-      }
-    });
-  }
+ 
 
-  function deleteCoop(coopId) {
-    let coops = getUserData('etee_coops');
-    coops = coops.filter(c => c.id !== coopId);
-    setUserData('etee_coops', coops);
-    loadCoops();
-    updateCoopManagementTitle();
-    showNotification('Chicken coop deleted successfully!', 'success');
-    
-    if (coops.length === 0) {
-      showChickenCoopManagement();
+  // Update deleteCoop function to use API
+function deleteCoop(coopId) {
+  fetch(`/api/coops/${coopId}`, {
+    method: 'DELETE'
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(data => {
+        throw new Error(data.error || 'Failed to delete coop');
+      });
     }
-  }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      loadCoops();
+      updateCoopManagementTitle();
+      showNotification('Chicken coop deleted successfully!', 'success');
+      
+      // If no coops left, show the empty state
+      fetch(`/api/coops?userId=${window.currentUser.userID}`)
+        .then(response => response.json())
+        .then(coops => {
+          if (coops.length === 0) {
+            showChickenCoopManagement();
+          }
+        });
+    } else {
+      showNotification(data.error || 'Failed to delete coop', 'error');
+    }
+  })
+  .catch(error => {
+    showNotification(error.message || 'Failed to delete coop', 'error');
+  });
+}
 
   const addCoopBtn = document.getElementById('addCoopBtn');
   const emptyStateBtn = document.querySelector('.empty-state-btn');
@@ -461,72 +415,119 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  const addCoopForm = document.getElementById('addCoopForm');
-  if (addCoopForm) {
-    addCoopForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      
-      const location = document.getElementById('coopLocation').value;
-      const size = parseFloat(document.getElementById('coopSize').value);
-      const capacity = parseInt(document.getElementById('coopCapacity').value);
-      
-      const newCoop = {
-        id: Date.now(),
+  // Update the addCoopForm to use API
+const addCoopForm = document.getElementById('addCoopForm');
+if (addCoopForm) {
+  addCoopForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const location = document.getElementById('coopLocation').value;
+    const size = parseFloat(document.getElementById('coopSize').value);
+    const capacity = parseInt(document.getElementById('coopCapacity').value);
+    
+    if (!location || isNaN(size) || isNaN(capacity)) {
+      showNotification('Please fill in all fields correctly', 'error');
+      return;
+    }
+    
+    const currentUser = window.currentUser;
+    if (!currentUser) {
+      showNotification('User session not found', 'error');
+      return;
+    }
+    
+    fetch('/api/coops', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId: currentUser.userID,
         location,
         size,
-        capacity,
-        dateAdded: new Date().toISOString(),
-        status: 'active'
-      };
-      
-      const coops = getUserData('etee_coops');
-      coops.push(newCoop);
-      setUserData('etee_coops', coops);
-      createPredefinedSensors(newCoop.id);
-      
-      closeModal(document.getElementById('addCoopModal'));
-      loadCoops();
-      updateCoopManagementTitle();
-      showNotification('Chicken coop added successfully!', 'success');
-      
-      if (coops.length === 1) {
-        setTimeout(() => {
-          showWaterQualityManagement(newCoop.id);
-        }, 1500);
+        capacity
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || 'Failed to add coop');
+        });
       }
-    });
-  }
-
-  const editCoopForm = document.getElementById('editCoopForm');
-  if (editCoopForm) {
-    editCoopForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      
-      const coopId = parseInt(document.getElementById('editCoopId').value);
-      const location = document.getElementById('editCoopLocation').value;
-      const size = parseFloat(document.getElementById('editCoopSize').value);
-      const capacity = parseInt(document.getElementById('editCoopCapacity').value);
-      
-      let coops = getUserData('etee_coops');
-      const coopIndex = coops.findIndex(c => c.id === coopId);
-      
-      if (coopIndex !== -1) {
-        coops[coopIndex] = {
-          ...coops[coopIndex],
-          location,
-          size,
-          capacity
-        };
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        closeModal(document.getElementById('addCoopModal'));
+        loadCoops();
+        showNotification('Chicken coop added successfully!', 'success');
         
-        setUserData('etee_coops', coops);
+        // After adding the first coop, navigate to its page
+        if (data.coop && data.coop.id) {
+          setTimeout(() => {
+            showWaterQualityManagement(data.coop.id);
+          }, 1500);
+        }
+      } else {
+        showNotification(data.error || 'Failed to add coop', 'error');
+      }
+    })
+    .catch(error => {
+      showNotification(error.message || 'Failed to add coop', 'error');
+    });
+  });
+}
+
+  // Update editCoopForm to use API
+const editCoopForm = document.getElementById('editCoopForm');
+if (editCoopForm) {
+  editCoopForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const coopId = document.getElementById('editCoopId').value;
+    const location = document.getElementById('editCoopLocation').value;
+    const size = parseFloat(document.getElementById('editCoopSize').value);
+    const capacity = parseInt(document.getElementById('editCoopCapacity').value);
+    
+    if (!location || isNaN(size) || isNaN(capacity)) {
+      showNotification('Please fill in all fields correctly', 'error');
+      return;
+    }
+    
+    fetch(`/api/coops/${coopId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        location,
+        size,
+        capacity
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || 'Failed to update coop');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
         closeModal(document.getElementById('editCoopModal'));
         loadCoops();
         updateCoopManagementTitle();
-
         showNotification('Chicken coop updated successfully!', 'success');
+      } else {
+        showNotification(data.error || 'Failed to update coop', 'error');
       }
+    })
+    .catch(error => {
+      showNotification(error.message || 'Failed to update coop', 'error');
     });
-  }
+  });
+}
 
   const backToCoopsBtn = document.getElementById('backToCoopsBtn');
   if (backToCoopsBtn) {
@@ -563,75 +564,54 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function loadDashboardData() {
-    const measurements = getUserData('etee_measurements');
-    const coopMeasurements = measurements.filter(m => m.coopId === currentCoopId);
+    if (!currentCoopId) return;
     
-    if (coopMeasurements.length === 0) {
-      setZeroValues();
-      const tableBody = document.querySelector('tbody');
-      if (tableBody) {
-        tableBody.innerHTML = `
-          <tr id="emptyStateRow">
-            <td colspan="6" style="text-align: center; padding: 2rem;">
-              <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-              <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
-            </td>
-          </tr>
-        `;
-      }
-    } else {
-      coopMeasurements.sort((a, b) => b.timestamp - a.timestamp);
-      updateDashboardData(coopMeasurements[0]);
-      
-      const tableBody = document.querySelector('tbody');
-      if (tableBody) {
-        tableBody.innerHTML = '';
-        coopMeasurements.forEach(measurement => {
-          updateActivityTable(measurement);
-        });
-      }
-    }
+    // Fetch the most recent reading
+    fetch(`/api/readings?coopId=${currentCoopId}&limit=1`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch readings');
+        }
+        return response.json();
+      })
+      .then(readings => {
+        if (readings.length === 0) {
+          // No readings available yet
+          setZeroValues();
+          const tableBody = document.querySelector('tbody');
+          if (tableBody) {
+            tableBody.innerHTML = `
+              <tr id="emptyStateRow">
+                <td colspan="6" style="text-align: center; padding: 2rem;">
+                  <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+                  <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+                </td>
+              </tr>
+            `;
+          }
+        } else {
+          // Update dashboard with the latest reading
+          const latestReading = readings[0];
+          updateDashboardCards(latestReading);
+          
+          // Now fetch all readings for the table
+          return fetch(`/api/readings?coopId=${currentCoopId}`)
+            .then(response => response.json())
+            .then(allReadings => {
+              updateActivityTable(allReadings);
+            });
+        }
+      })
+      .catch(error => {
+        console.error('Error loading dashboard data:', error);
+        showNotification('Failed to load sensor data', 'error');
+      });
   }
 
-  function loadManureData() {
-    const manureLogs = getUserData('etee_manure_logs');
-    const coopManureLogs = manureLogs.filter(log => log.coopId === currentCoopId);
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const todayManure = coopManureLogs
-      .filter(log => new Date(log.timestamp) >= today)
-      .reduce((total, log) => total + log.amountCollected, 0);
-    
-    const manureValue = document.querySelector('.manure-value');
-    if (manureValue) {
-      manureValue.textContent = `${todayManure.toFixed(2)} kg`;
-    }
-    
-    const manureTableBody = document.getElementById('manureTableBody');
-    if (manureTableBody) {
-      if (coopManureLogs.length === 0) {
-        manureTableBody.innerHTML = `
-          <tr id="manureEmptyStateRow">
-            <td colspan="5" style="text-align: center; padding: 2rem;">
-              <i class='bx bx-package' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-              <span style="color: var(--text-light);">No manure collection records available. Click "Add Data" to record collections.</span>
-            </td>
-          </tr>
-        `;
-      } else {
-        manureTableBody.innerHTML = '';
-        coopManureLogs.sort((a, b) => b.timestamp - a.timestamp);
-        coopManureLogs.forEach(log => {
-          updateManureTable(log);
-        });
-      }
-    }
-  }
+  // Load manure data from database
+
   const addDataBtn = document.getElementById('addDataBtn');
   const dataEntryModal = document.getElementById('dataEntryModal');
-  const dataEntryForm = document.getElementById('dataEntryForm');
   
   function openDataModal() {
     const now = new Date();
@@ -652,6 +632,8 @@ document.addEventListener("DOMContentLoaded", () => {
     addDataBtn.addEventListener('click', openDataModal);
   }
   
+  // Add this function to handle the data entry form submission
+  const dataEntryForm = document.getElementById('dataEntryForm');
   if (dataEntryForm) {
     dataEntryForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -669,120 +651,108 @@ document.addEventListener("DOMContentLoaded", () => {
       const ammonia = parseFloat(document.getElementById('ammonia').value);
       const manureAmount = parseFloat(document.getElementById('manureAmount').value);
       
-      const newMeasurement = {
-        id: Date.now(),
+      // Save sensor reading data
+      const readingData = {
         coopId: currentCoopId,
-        dateTime: dateTime,
-        timestamp: new Date(dateTime).getTime(),
         temperature,
         humidity,
-        co2,
-        ammonia,
-        readingIds: {
-          temperature: generateReadingId('TEMP'),
-          humidity: generateReadingId('HUMID'),
-          co2: generateReadingId('CO2'),
-          ammonia: generateReadingId('AMM')
-        },
-        deviceIds: {
-          temperature: 'DHT22-PRO',
-          humidity: 'DHT22-PRO',
-          co2: 'MH-Z19B',
-          ammonia: 'MQ-137'
-        }
+        co2Level: co2,
+        ammoniaLevel: ammonia,
+        timestamp: dateTime
       };
       
-      const newManureLog = {
-        logId: Date.now() + 1,
+      // Save manure collection data
+      const manureData = {
         coopId: currentCoopId,
-        timestamp: new Date(dateTime).getTime(),
-        dateTime: dateTime,
         amountCollected: manureAmount,
+        timestamp: dateTime
       };
       
-      const measurements = getUserData('etee_measurements');
-      measurements.push(newMeasurement);
-      setUserData('etee_measurements', measurements);
-      
-      const manureLogs = getUserData('etee_manure_logs');
-      manureLogs.push(newManureLog);
-      setUserData('etee_manure_logs', manureLogs);
-      
-      const submitBtn = dataEntryForm.querySelector('.submit-button');
-      if (submitBtn) {
-        submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
-        submitBtn.classList.add('success-animation');
-      }
-      
-      updateDashboardData(newMeasurement);
-      updateManureData(newManureLog);
-      
-      loadDashboardData();
-      loadManureData();
-      
-      setTimeout(() => {
-        if (submitBtn) {
-          submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
-          submitBtn.classList.remove('success-animation');
+      // First save the sensor reading
+      fetch('/api/readings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(readingData),
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || 'Failed to save sensor readings');
+          });
         }
-        closeModal(dataEntryModal);
-        showNotification('New data added successfully!', 'success');
-      }, 1500);
+        return response.json();
+      })
+      .then(readingResult => {
+        // Then save the manure log
+        return fetch('/api/manure-logs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(manureData),
+        });
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || 'Failed to save manure data');
+          });
+        }
+        return response.json();
+      })
+      .then(manureResult => {
+        // Both saved successfully
+        const submitBtn = dataEntryForm.querySelector('.submit-button');
+        if (submitBtn) {
+          submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
+          submitBtn.classList.add('success-animation');
+        }
+        
+        // Reload dashboard data
+        loadDashboardData();
+    
+        
+        setTimeout(() => {
+          if (submitBtn) {
+            submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
+            submitBtn.classList.remove('success-animation');
+          }
+          closeModal(document.getElementById('dataEntryModal'));
+          showNotification('New data added successfully!', 'success');
+        }, 1500);
+      })
+      .catch(error => {
+        showNotification(error.message || 'Failed to save data', 'error');
+      });
     });
   }
   
-  function updateDashboardData(measurement) {
-    const emptyStateRow = document.getElementById('emptyStateRow');
-    if (emptyStateRow) {
-      emptyStateRow.remove();
-    }
-
+  // Update dashboard card values
+  function updateDashboardCards(reading) {
     const temperatureValue = document.querySelector('.temperature-value');
     if (temperatureValue) {
-      temperatureValue.textContent = `${measurement.temperature}°C`;
+      temperatureValue.textContent = `${reading.Temperature}°C`;
     }
     
     const humidityValue = document.querySelector('.humidity-value');
     if (humidityValue) {
-      humidityValue.textContent = `${measurement.humidity}%`;
+      humidityValue.textContent = `${reading.Humidity}%`;
     }
     
     const co2Value = document.querySelector('.co2-value');
     if (co2Value) {
-      co2Value.textContent = `${measurement.co2} ppm`;
+      co2Value.textContent = `${reading.CO2Level} ppm`;
     }
     
     const ammoniaValue = document.querySelector('.ammonia-value');
     if (ammoniaValue) {
-      ammoniaValue.textContent = `${measurement.ammonia} ppm`;
+      ammoniaValue.textContent = `${reading.AmmoniaLevel} ppm`;
     }
-    
-    updateActivityTable(measurement);
   }
   
-  function updateManureData(manureLog) {
-    const manureLogs = getUserData('etee_manure_logs');
-    const coopManureLogs = manureLogs.filter(log => log.coopId === currentCoopId);
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const todayManure = coopManureLogs
-      .filter(log => new Date(log.timestamp) >= today)
-      .reduce((total, log) => total + log.amountCollected, 0);
-    
-    const manureValue = document.querySelector('.manure-value');
-    if (manureValue) {
-      manureValue.textContent = `${todayManure.toFixed(2)} kg`;
-    }
-    
-    const manureEmptyStateRow = document.getElementById('manureEmptyStateRow');
-    if (manureEmptyStateRow) {
-      manureEmptyStateRow.remove();
-    }
-    
-    updateManureTable(manureLog);
-  }
+  
   
   function updateActivityTable(measurement) {
     const tableBody = document.querySelector('tbody');
@@ -825,45 +795,39 @@ document.addEventListener("DOMContentLoaded", () => {
         label: 'Temperature reading', 
         value: `${measurement.temperature}°C`,
         isNormal: isNormal.temperature,
-        readingId: measurement.readingIds?.temperature || generateReadingId('TEMP'),
-        deviceId: measurement.deviceIds?.temperature || 'DHT22-PRO'
+        readingId: measurement.readingIds?.temperature || generateReadingId('TEMP')
       },
       { 
         type: 'humidity', 
         label: 'Humidity reading', 
         value: `${measurement.humidity}%`,
         isNormal: isNormal.humidity,
-        readingId: measurement.readingIds?.humidity || generateReadingId('HUMID'),
-        deviceId: measurement.deviceIds?.humidity || 'DHT22-PRO'
+        readingId: measurement.readingIds?.humidity || generateReadingId('HUMID')
       },
       { 
         type: 'co2', 
         label: 'CO₂ level reading', 
         value: `${measurement.co2} ppm`,
         isNormal: isNormal.co2,
-        readingId: measurement.readingIds?.co2 || generateReadingId('CO2'),
-        deviceId: measurement.deviceIds?.co2 || 'MH-Z19B'
+        readingId: measurement.readingIds?.co2 || generateReadingId('CO2')
       },
       { 
         type: 'ammonia', 
         label: 'Ammonia level reading', 
         value: `${measurement.ammonia} ppm`,
         isNormal: isNormal.ammonia,
-        readingId: measurement.readingIds?.ammonia || generateReadingId('AMM'),
-        deviceId: measurement.deviceIds?.ammonia || 'MQ-137'
+        readingId: measurement.readingIds?.ammonia || generateReadingId('AMM')
       }
     ];
     
     sensors.forEach(sensor => {
       const newRow = document.createElement('tr');
       newRow.dataset.sensor = sensor.type;
-      newRow.dataset.deviceId = sensor.deviceId;
       newRow.dataset.readingId = sensor.readingId;
       
       newRow.innerHTML = `
         <td>${formattedDate} • ${formattedTime}</td>
         <td>${sensor.readingId}</td>
-        <td>${sensor.deviceId}</td>
         <td>${sensor.value}</td>
         <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
         <td style="text-align: center;">
@@ -892,38 +856,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function updateManureTable(manureLog) {
-    const manureTableBody = document.getElementById('manureTableBody');
-    if (!manureTableBody) return;
-    
-    const timestamp = new Date(manureLog.timestamp);
-    const jsonDate = JSON.stringify(timestamp).replace(/['"]/g, '');
-    
-    const newRow = document.createElement('tr');
-    
-    newRow.innerHTML = `
-      <td>${jsonDate}</td>
-      <td>LOG-${manureLog.logId}</td>
-      <td>${manureLog.coopId}</td>
-      <td>${manureLog.amountCollected.toFixed(2)} kg</td>
-      <td style="text-align: center;">
-        <i class='bx bx-trash delete-icon' title='Delete'></i>
-      </td>
-    `;
-    
-    // Add click event to the delete icon
-    const deleteIcon = newRow.querySelector('.delete-icon');
-    deleteIcon.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showDeleteModal('manure', manureLog.logId);
-    });
-    
-    if (manureTableBody.firstChild) {
-      manureTableBody.insertBefore(newRow, manureTableBody.firstChild);
-    } else {
-      manureTableBody.appendChild(newRow);
-    }
-  }
+  
 
   function showDeleteModal(type, id, sensorType = null) {
     const modal = document.createElement('div');
@@ -979,7 +912,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (type === 'sensor') {
         deleteSensorReading(id, sensorType);
       } else {
-        deleteManureLog(id);
+     null;
       }
       modal.classList.remove('active');
       setTimeout(() => {
@@ -1014,15 +947,6 @@ document.addEventListener("DOMContentLoaded", () => {
     
     loadDashboardData();
     showNotification('Sensor reading deleted successfully!', 'success');
-  }
-
-  function deleteManureLog(logId) {
-    let manureLogs = getUserData('etee_manure_logs');
-    manureLogs = manureLogs.filter(log => log.logId !== logId);
-    setUserData('etee_manure_logs', manureLogs);
-    
-    loadManureData();
-    showNotification('Manure log deleted successfully!', 'success');
   }
 
   const sensorSelector = document.getElementById('sensorSelector');
@@ -1195,61 +1119,76 @@ if (profileEditForm) {
     const address = document.getElementById('profileAddress').value.trim();
     const role = document.getElementById('userRole').value;
     
-    // Get all users from localStorage
-    const users = JSON.parse(localStorage.getItem('etee_users') || '[]');
-    
-    // Find the user in the array
-    const userIndex = users.findIndex(u => u.userID === currentUser.userID);
-    
-    if (userIndex !== -1) {
-      // Update the user in the users array
-      users[userIndex] = {
-        ...users[userIndex],
-        firstName: firstName,
-        lastName: lastName,
-        name: fullName, // Keep the full name for compatibility
-        email: email,
-        phone: phone,
-        address: address,
-        role: role
-      };
-      
-      // Save the updated users array
-      localStorage.setItem('etee_users', JSON.stringify(users));
-      
-      // Update current session
-      const updatedCurrentUser = {
-        ...currentUser,
-        firstName: firstName,
-        lastName: lastName,
-        name: fullName,
-        email: email,
-        phone: phone,
-        address: address,
-        role: role
-      };
-      
-      // Update localStorage for current session
-      localStorage.setItem('etee_current_user', JSON.stringify(updatedCurrentUser));
-      
-      // Update the current user object
-      window.currentUser = updatedCurrentUser;
-      
-      // Update the sidebar display
-      document.getElementById('adminName').textContent = fullName;
-      document.getElementById('adminEmail').textContent = email;
-      document.getElementById('adminRole').textContent = role;
-      
-      // Close the modal
-      const modal = document.getElementById('profileEditModal');
-      modal.classList.remove('active');
-      
-      // Show success notification
-      showNotification('Profile updated successfully!', 'success');
-    } else {
-      // User not found in the users array
-      showNotification('Error updating profile. User not found.', 'error');
+    // Basic validation
+    if (!firstName || !lastName || !email) {
+      showNotification('Please fill in all required fields', 'error');
+      return;
     }
+    
+    // Prepare the data for API
+    const userData = {
+      firstName,
+      lastName,
+      email,
+      phone,
+      address,
+      role
+    };
+    
+    // Update using API
+    fetch(`/api/users/${currentUser.userID}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(data => {
+          throw new Error(data.error || 'Failed to update profile');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // Update localStorage for current session
+        const updatedCurrentUser = {
+          ...currentUser,
+          firstName: firstName,
+          lastName: lastName,
+          name: fullName,
+          email: email,
+          phone: phone,
+          address: address,
+          role: role
+        };
+        
+        localStorage.setItem('etee_current_user', JSON.stringify(updatedCurrentUser));
+        
+        // Update the current user object
+        window.currentUser = updatedCurrentUser;
+        
+        // Update the sidebar display
+        document.getElementById('adminName').textContent = fullName;
+        document.getElementById('adminEmail').textContent = email;
+        document.getElementById('adminRole').textContent = role;
+        
+        // Close the modal
+        const modal = document.getElementById('profileEditModal');
+        modal.classList.remove('active');
+        
+        // Show success notification
+        showNotification('Profile updated successfully!', 'success');
+      } else {
+        showNotification(data.error || 'An error occurred', 'error');
+      }
+    })
+    .catch(error => {
+      console.error('Error updating profile:', error);
+      showNotification(error.message || 'Failed to update profile', 'error');
+    });
   });
 }
 
@@ -1307,6 +1246,46 @@ if (profileEditForm) {
   });
 });
 
+// Delete sensor reading
+function deleteSensorReading(readingId) {
+  fetch(`/api/readings/${readingId}`, {
+    method: 'DELETE'
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      loadDashboardData();
+      showNotification('Reading deleted successfully!', 'success');
+    } else {
+      showNotification('Failed to delete reading', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting reading:', error);
+    showNotification('Failed to delete reading', 'error');
+  });
+}
+
+// Delete manure log
+function deleteManureLog(logId) {
+  fetch(`/api/manure-logs/${logId}`, {
+    method: 'DELETE'
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+ 
+      showNotification('Manure log deleted successfully!', 'success');
+    } else {
+      showNotification('Failed to delete manure log', 'error');
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting manure log:', error);
+    showNotification('Failed to delete manure log', 'error');
+  });
+}
+
 function generateReadingId(prefix) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = prefix + '-';
@@ -1314,4 +1293,29 @@ function generateReadingId(prefix) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+function deleteSensorReading(readingId) {
+  fetch(`/api/readings/${readingId}`, {
+    method: 'DELETE'
+  })
+  .then(response => {
+    if (!response.ok) {
+      return response.json().then(data => {
+        throw new Error(data.error || 'Failed to delete reading');
+      });
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data.success) {
+      loadDashboardData();
+      showNotification('Sensor reading deleted successfully!', 'success');
+    } else {
+      showNotification(data.error || 'Failed to delete reading', 'error');
+    }
+  })
+  .catch(error => {
+    showNotification(error.message || 'Failed to delete reading', 'error');
+  });
 }
