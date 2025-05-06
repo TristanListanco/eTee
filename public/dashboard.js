@@ -273,7 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
         <div class="info-row">
           <i class='bx bxs-group'></i>
-          <span>Capacity: ${coop.capacity} birds</span>
+          <span>Count: ${coop.capacity} Chicken/s</span>
         </div>
         <div class="info-row">
           <i class='bx bx-calendar'></i>
