@@ -179,30 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   }
 
-  function loadSensorData() {
-    const sensorDevices = getUserData('etee_sensor_devices');
-    const coopSensors = sensorDevices.filter(sensor => sensor.coopId === currentCoopId);
-    
-    const sensorDevicesList = document.getElementById('sensorDevicesList');
-    const sensorEmptyState = document.getElementById('sensorEmptyState');
-    
-    if (coopSensors.length === 0) {
-      sensorDevicesList.style.display = 'none';
-      sensorEmptyState.style.display = 'block';
-    } else {
-      sensorDevicesList.style.display = 'grid';
-      sensorEmptyState.style.display = 'none';
-      
-      sensorDevicesList.innerHTML = '';
-      
-      coopSensors.forEach(sensor => {
- 
-        sensorDevicesList.appendChild(sensorItem);
-      });
-    }
-  }
 
-  
 
   function loadCoops() {
     const currentUser = window.currentUser;
@@ -592,12 +569,14 @@ if (editCoopForm) {
           const tableBody = document.querySelector('tbody');
           if (tableBody) {
             tableBody.innerHTML = `
-              <tr id="emptyStateRow">
-                <td colspan="6" style="text-align: center; padding: 2rem;">
-                  <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-                  <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
-                </td>
-              </tr>
+                <tr id="emptyStateRow">
+              <td colspan="5" class="empty-state-cell">
+                <div class="empty-state-container">
+                  <i class='bx bx-database' style="font-size: 2.5rem; color: #c0c0c0; margin-bottom: 1rem;"></i>
+                  <p>No sensor readings available. Click "Add Data" to record measurements.</p>
+                </div>
+              </td>
+            </tr>
             `;
           }
         } else {
@@ -609,6 +588,8 @@ if (editCoopForm) {
           return fetch(`/api/readings?coopId=${currentCoopId}`)
             .then(response => response.json())
             .then(allReadings => {
+              // Log the readings to verify the structure
+              console.log('All readings:', allReadings);
               updateActivityTable(allReadings);
             });
         }
@@ -719,6 +700,43 @@ if (dataEntryForm) {
     });
   });
 }
+
+
+// Initialize the delete confirmation modal events
+function initDeleteConfirmationModal() {
+  const modal = document.getElementById('deleteConfirmationModal');
+  const closeButton = modal.querySelector('.close-button');
+  const cancelButton = modal.querySelector('.cancel-button');
+  const confirmButton = document.getElementById('confirmDeleteBtn');
+  
+  // Close modal when clicking the X
+  closeButton.addEventListener('click', () => {
+    modal.classList.remove('active');
+  });
+  
+  // Close modal when clicking Cancel
+  cancelButton.addEventListener('click', () => {
+    modal.classList.remove('active');
+  });
+  
+  // Handle delete confirmation
+  confirmButton.addEventListener('click', () => {
+    const readingId = document.getElementById('deleteReadingId').value;
+    
+    // Call the delete function
+    deleteSensorReading(readingId);
+    
+    // Close the modal
+    modal.classList.remove('active');
+  });
+  
+  // Close modal when clicking outside
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('active');
+    }
+  });
+}
  
   
   // Update dashboard card values
@@ -750,258 +768,189 @@ if (dataEntryForm) {
     const tableBody = document.querySelector('tbody');
     if (!tableBody) return;
     
-    // Clear existing rows before adding new ones
-    tableBody.innerHTML = '';
+    // Clear existing rows except the empty state row
+    const emptyStateRow = document.getElementById('emptyStateRow');
+    if (emptyStateRow) {
+      emptyStateRow.style.display = 'none';
+    } else {
+      tableBody.innerHTML = '';
+    }
     
-    // Check if readings is an array or a single object
-    const readingsArray = Array.isArray(readings) ? readings : [readings];
-    
-    readingsArray.forEach(reading => {
-      // Log to debug the reading format
-      console.log('Processing reading:', reading);
+    readings.forEach(reading => {
+      // Format date and time
+      const timestamp = new Date(reading.TimeStamp);
+      const formattedDate = timestamp.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
       
-      try {
-        // Handle database format (capital first letters) or client format
-        const readingId = reading.ReadingID || reading.id;
-        const temperature = reading.Temperature !== undefined ? reading.Temperature : reading.temperature;
-        const humidity = reading.Humidity !== undefined ? reading.Humidity : reading.humidity;
-        const co2 = reading.CO2Level !== undefined ? reading.CO2Level : reading.co2Level || reading.co2;
-        const ammonia = reading.AmmoniaLevel !== undefined ? reading.AmmoniaLevel : reading.ammoniaLevel || reading.ammonia;
-        
-        // Parse date from either format
-        let timestamp;
-        if (reading.TimeStamp) {
-          timestamp = new Date(reading.TimeStamp);
-        } else if (reading.timestamp) {
-          timestamp = new Date(reading.timestamp);
-        } else {
-          timestamp = new Date(); // Fallback
-        }
-        
-        const formattedDate = timestamp.toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric' 
-        });
-        
-        const formattedTime = timestamp.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
-        
-        const normalRanges = {
-          temperature: { min: 26.0, max: 29.0 },
-          humidity: { min: 50, max: 70 },
-          co2: { min: 350, max: 500 },
-          ammonia: { min: 0, max: 0.25 }
-        };
-        
-        const isNormal = {
-          temperature: temperature >= normalRanges.temperature.min && 
-                       temperature <= normalRanges.temperature.max,
-          humidity: humidity >= normalRanges.humidity.min && 
-                    humidity <= normalRanges.humidity.max,
-          co2: co2 >= normalRanges.co2.min && 
-               co2 <= normalRanges.co2.max,
-          ammonia: ammonia >= normalRanges.ammonia.min && 
-                   ammonia <= normalRanges.ammonia.max
-        };
-        
-        // Generate row data for each sensor type
-        const sensors = [
-          { 
-            type: 'temperature', 
-            label: 'Temperature reading', 
-            value: `${temperature}°C`,
-            isNormal: isNormal.temperature,
-            readingId: `TEMP-${readingId}`
-          },
-          { 
-            type: 'humidity', 
-            label: 'Humidity reading', 
-            value: `${humidity}%`,
-            isNormal: isNormal.humidity,
-            readingId: `HUMID-${readingId}`
-          },
-          { 
-            type: 'co2', 
-            label: 'CO₂ level reading', 
-            value: `${co2} ppm`,
-            isNormal: isNormal.co2,
-            readingId: `CO2-${readingId}`
-          },
-          { 
-            type: 'ammonia', 
-            label: 'Ammonia level reading', 
-            value: `${ammonia} ppm`,
-            isNormal: isNormal.ammonia,
-            readingId: `AMM-${readingId}`
-          }
-        ];
-        
-        // Get selected sensor type
-        const sensorType = document.getElementById('sensorSelector').value;
-        
-        sensors.forEach(sensor => {
-          // Skip sensors that don't match the selected filter
-          if (sensorType !== 'all' && sensorType !== sensor.type) {
-            return;
-          }
-          
-          const newRow = document.createElement('tr');
-          newRow.dataset.sensor = sensor.type;
-          newRow.dataset.readingId = readingId;
-          
-          newRow.innerHTML = `
-            <td>${formattedDate} • ${formattedTime}</td>
-            <td>${sensor.readingId}</td>
-            <td>${sensor.value}</td>
-            <td><span class="status ${sensor.isNormal ? 'normal' : 'abnormal'}">${sensor.isNormal ? 'Normal' : 'Abnormal'}</span></td>
-            <td style="text-align: center;">
-              <i class='bx bx-trash delete-icon' title='Delete'></i>
-            </td>
-          `;
+      const formattedTime = timestamp.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
       
-          // Add click event to the delete icon
-          const deleteIcon = newRow.querySelector('.delete-icon');
-          deleteIcon.addEventListener('click', () => {
-            deleteSensorReading(readingId);
-          });
-          
-          // Add to top of table
-          if (tableBody.firstChild) {
-            tableBody.insertBefore(newRow, tableBody.firstChild);
-          } else {
-            tableBody.appendChild(newRow);
-          }
-        });
-      } catch (error) {
-        console.error('Error processing reading:', error, reading);
-      }
-    });
-  }
-
-  
-
-  function showDeleteModal(type, id, sensorType = null) {
-    const modal = document.createElement('div');
-    modal.className = 'modal delete-modal active';
-    
-    const modalContent = document.createElement('div');
-    modalContent.className = 'modal-content';
-    
-    const modalHeader = document.createElement('div');
-    modalHeader.className = 'modal-header';
-    
-    const modalTitle = document.createElement('h3');
-    modalTitle.innerHTML = `<i class='bx bx-trash'></i> Delete ${type === 'sensor' ? 'Sensor Reading' : 'Manure Log'}`;
-    
-    const closeButton = document.createElement('button');
-    closeButton.className = 'close-button';
-    closeButton.innerHTML = '&times;';
-    closeButton.addEventListener('click', () => {
-      modal.classList.remove('active');
-      setTimeout(() => {
-        document.body.removeChild(modal);
-      }, 300);
-    });
-    
-    modalHeader.appendChild(modalTitle);
-    modalHeader.appendChild(closeButton);
-    
-    const modalBody = document.createElement('div');
-    modalBody.className = 'modal-body';
-    modalBody.innerHTML = `
-      <p style="margin-bottom: 1.5rem;">Are you sure you want to delete this ${type === 'sensor' ? 'sensor reading' : 'manure collection log'}?</p>
-      <p style="color: var(--danger-color); font-size: 0.9rem;">This action cannot be undone.</p>
-    `;
-    
-    const modalActions = document.createElement('div');
-    modalActions.className = 'form-actions';
-    
-    const cancelButton = document.createElement('button');
-    cancelButton.className = 'cancel-button';
-    cancelButton.textContent = 'Cancel';
-    cancelButton.addEventListener('click', () => {
-      modal.classList.remove('active');
-      setTimeout(() => {
-        document.body.removeChild(modal);
-      }, 300);
-    });
-    
-    const deleteButton = document.createElement('button');
-    deleteButton.className = 'submit-button';
-    deleteButton.style.backgroundColor = 'var(--danger-color)';
-    deleteButton.innerHTML = '<i class="bx bx-trash"></i> Delete';
-    deleteButton.addEventListener('click', () => {
-      if (type === 'sensor') {
-        deleteSensorReading(id, sensorType);
+      // Create a new row
+      const newRow = document.createElement('tr');
+      
+      // IMPORTANT: Use the actual ReadingID from the database
+      newRow.dataset.readingId = reading.ReadingID;
+      
+      // Check if the reading is normal based on the sensor type
+      const isTemperatureNormal = reading.Temperature >= 26.0 && reading.Temperature <= 29.0;
+      const isHumidityNormal = reading.Humidity >= 50 && reading.Humidity <= 70;
+      const isCO2Normal = reading.CO2Level >= 350 && reading.CO2Level <= 500;
+      const isAmmoniaNormal = reading.AmmoniaLevel >= 0 && reading.AmmoniaLevel <= 0.25;
+      
+      // Determine which reading to display based on what's available
+      let value, isNormal;
+      if (reading.Temperature !== null && reading.Temperature !== undefined) {
+        value = `${reading.Temperature}°C`;
+        isNormal = isTemperatureNormal;
+      } else if (reading.Humidity !== null && reading.Humidity !== undefined) {
+        value = `${reading.Humidity}%`;
+        isNormal = isHumidityNormal;
+      } else if (reading.CO2Level !== null && reading.CO2Level !== undefined) {
+        value = `${reading.CO2Level} ppm`;
+        isNormal = isCO2Normal;
+      } else if (reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined) {
+        value = `${reading.AmmoniaLevel} ppm`;
+        isNormal = isAmmoniaNormal;
       } else {
-     
+        value = 'N/A';
+        isNormal = true;
       }
-      modal.classList.remove('active');
-      setTimeout(() => {
-        document.body.removeChild(modal);
-      }, 300);
-    });
-    
-    modalActions.appendChild(cancelButton);
-    modalActions.appendChild(deleteButton);
-    
-    modalContent.appendChild(modalHeader);
-    modalContent.appendChild(modalBody);
-    modalContent.appendChild(modalActions);
-    modal.appendChild(modalContent);
-    
-    document.body.appendChild(modal);
-    
-    window.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.classList.remove('active');
-        setTimeout(() => {
-          document.body.removeChild(modal);
-        }, 300);
+      
+      newRow.innerHTML = `
+        <td>${formattedDate} • ${formattedTime}</td>
+        <td>${reading.ReadingID}</td>
+        <td>${value}</td>
+        <td><span class="status ${isNormal ? 'normal' : 'abnormal'}">${isNormal ? 'Normal' : 'Abnormal'}</span></td>
+        <td style="text-align: center;">
+          <i class='bx bx-trash delete-icon' title='Delete'></i>
+        </td>
+      `;
+      
+      // Add event listener to delete icon
+      const deleteIcon = newRow.querySelector('.delete-icon');
+      deleteIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Pass the actual ReadingID from the database to the delete confirmation modal
+        console.log('Clicked delete for reading ID:', reading.ReadingID);
+        showDeleteConfirmationModal(reading.ReadingID);
+      });
+      
+      // Check current chart filter
+      const sensorSelector = document.getElementById('sensorSelector');
+      if (sensorSelector) {
+        const selectedSensor = sensorSelector.value;
+        if (selectedSensor !== 'all') {
+          const hasTemperature = reading.Temperature !== null && reading.Temperature !== undefined;
+          const hasHumidity = reading.Humidity !== null && reading.Humidity !== undefined;
+          const hasCO2 = reading.CO2Level !== null && reading.CO2Level !== undefined;
+          const hasAmmonia = reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined;
+          
+          if ((selectedSensor === 'temperature' && !hasTemperature) ||
+              (selectedSensor === 'humidity' && !hasHumidity) ||
+              (selectedSensor === 'co2' && !hasCO2) ||
+              (selectedSensor === 'ammonia' && !hasAmmonia)) {
+            newRow.style.display = 'none';
+          }
+        }
       }
+      
+      tableBody.appendChild(newRow);
     });
   }
 
+  function showDeleteConfirmationModal(readingId) {
+    console.log('Showing delete confirmation for ID:', readingId);
+    
+    // Get the modal (create it if it doesn't exist)
+    let modal = document.getElementById('deleteConfirmationModal');
+    
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'deleteConfirmationModal';
+      modal.className = 'modal';
+      
+      modal.innerHTML = `
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3><i class='bx bx-trash'></i> Delete Sensor Reading</h3>
+            <button class="close-button">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete this sensor reading?</p>
+            <p style="color: var(--danger-color); font-size: 0.9rem;">This action cannot be undone.</p>
+            
+            <input type="hidden" id="deleteReadingId" value="">
+            
+            <div class="form-actions">
+              <button type="button" class="cancel-button">Cancel</button>
+              <button type="button" id="confirmDeleteBtn" class="submit-button" style="background-color: var(--danger-color);">
+                <i class='bx bx-trash'></i> Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      // Initialize the new modal
+      initDeleteConfirmationModal();
+    }
+    
+    // Store the reading ID and show the modal
+    document.getElementById('deleteReadingId').value = readingId;
+    modal.classList.add('active');
+  }
   function deleteSensorReading(readingId) {
+    if (!readingId) {
+      console.error('No reading ID provided for deletion');
+      showNotification('Error: No reading ID provided', 'error');
+      return;
+    }
+    
     console.log('Deleting reading with ID:', readingId);
     
     fetch(`/api/readings/${readingId}`, {
       method: 'DELETE'
     })
     .then(response => {
-      if (!response.ok) {
-        return response.json().then(data => {
+      console.log('Delete response status:', response.status);
+      
+      // Parse the JSON response
+      return response.json().then(data => {
+        // Check if the response is successful
+        if (!response.ok) {
           throw new Error(data.error || 'Failed to delete reading');
-        });
-      }
-      return response.json();
+        }
+        return data;
+      });
     })
     .then(data => {
-      console.log('Delete response:', data);
+      console.log('Delete response data:', data);
       
       if (data.success) {
-        // Remove rows with this reading ID
-        const rows = document.querySelectorAll(`tr[data-reading-id="${readingId}"]`);
-        rows.forEach(row => row.remove());
+        // Close the modal if it's still open
+        const modal = document.getElementById('deleteConfirmationModal');
+        if (modal) modal.classList.remove('active');
         
-        // Also refresh the data to update the dashboard cards
+        // Reload dashboard data to refresh the table
         loadDashboardData();
-        
-        showNotification('Reading deleted successfully!', 'success');
+        showNotification('Sensor reading deleted successfully!', 'success');
       } else {
         showNotification(data.error || 'Failed to delete reading', 'error');
       }
     })
     .catch(error => {
       console.error('Error deleting reading:', error);
-      showNotification('Failed to delete reading: ' + error.message, 'error');
+      showNotification(error.message || 'Failed to delete reading', 'error');
     });
   }
-
  
 
   const sensorSelector = document.getElementById('sensorSelector');
