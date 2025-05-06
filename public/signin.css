@@ -566,3 +566,36 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Password field styling */
+.password-field {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #a0aec0;
+  font-size: 1.2rem;
+  z-index: 10;
+  transition: all var(--transition-speed);
+}
+
+.password-toggle:hover {
+  color: var(--primary-color);
+}
+
+.password-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #a0aec0;
+  margin-top: 0.25rem;
+}
+
+/* Add red border for invalid password */
+input:invalid {
+  border-color: #ef4444;
+}

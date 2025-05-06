@@ -50,10 +50,11 @@
           
           <div class="form-group">
             <label for="login-password">Password</label>
-            <div class="input-field">
-              <input type="password" id="login-password" required>
-              <i class='bx bx-lock-alt'></i>
+            <div class="input-field password-field">
+              <input type="password" id="login-password" minlength="8" required>
+              <i class='bx bx-show password-toggle' title="Show password"></i>
             </div>
+            <small class="password-hint">Password must be at least 8 characters long</small>
           </div>
           
           <div class="options-row">
@@ -104,10 +105,11 @@
           
           <div class="form-group">
             <label for="register-password">Password</label>
-            <div class="input-field">
-              <input type="password" id="register-password" required>
-              <i class='bx bx-lock-alt'></i>
+            <div class="input-field password-field">
+              <input type="password" id="register-password" required minlength="8">
+              <i class='bx bx-show password-toggle' title="Show password"></i>
             </div>
+            <small class="password-hint">Password must be at least 8 characters long</small>
           </div>
           
           <div class="form-group">

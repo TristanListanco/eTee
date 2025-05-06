@@ -1,4 +1,97 @@
 document.addEventListener('DOMContentLoaded', function() {
+
+   // Password visibility toggle
+   const passwordToggles = document.querySelectorAll('.password-toggle');
+  
+   passwordToggles.forEach(toggle => {
+     toggle.addEventListener('click', function(e) {
+       // Prevent event propagation
+       e.stopPropagation();
+       
+       // Find the password input
+       const passwordField = this.parentElement.querySelector('input');
+       const type = passwordField.getAttribute('type');
+       
+       if (type === 'password') {
+         passwordField.setAttribute('type', 'text');
+         this.classList.remove('bx-show');
+         this.classList.add('bx-hide');
+         this.setAttribute('title', 'Hide password');
+       } else {
+         passwordField.setAttribute('type', 'password');
+         this.classList.remove('bx-hide');
+         this.classList.add('bx-show');
+         this.setAttribute('title', 'Show password');
+       }
+     });
+   });
+   
+   // Password validation - only show hint when needed
+   const passwordFields = document.querySelectorAll('input[type="password"]');
+   
+   passwordFields.forEach(field => {
+     // Find the password hint element if it exists
+     const passwordHint = field.parentElement.nextElementSibling;
+     if (passwordHint && passwordHint.classList.contains('password-hint')) {
+       // Initially hide hint
+       passwordHint.style.display = 'none';
+       
+       // Check password on input
+       field.addEventListener('input', function() {
+         if (this.value.length > 0 && this.value.length < 8) {
+           // Password too short, show hint
+           passwordHint.style.display = 'block';
+           // Set color but don't add red outlines
+           passwordHint.style.color = '#f87171';
+         } else {
+           // Hide hint when empty or valid
+           passwordHint.style.display = 'none';
+         }
+       });
+       
+       // Extra check on blur
+       field.addEventListener('blur', function() {
+         if (this.value.length > 0 && this.value.length < 8) {
+           passwordHint.style.display = 'block';
+           passwordHint.style.color = '#f87171';
+         } else {
+           passwordHint.style.display = 'none';
+         }
+       });
+     }
+   });
+   
+   // Form submission validation
+   const forms = document.querySelectorAll('form');
+   
+   forms.forEach(form => {
+     form.addEventListener('submit', function(e) {
+       // Get all password fields in this form
+       const passwordInputs = this.querySelectorAll('input[type="password"]');
+       
+       // Check each password
+       let isValid = true;
+       
+       passwordInputs.forEach(input => {
+         if (input.value.length < 8) {
+           isValid = false;
+           
+           // Show the hint
+           const hint = input.parentElement.nextElementSibling;
+           if (hint && hint.classList.contains('password-hint')) {
+             hint.style.display = 'block';
+             hint.style.color = '#f87171';
+           }
+           
+           // Don't add red outline as requested
+         }
+       });
+       
+       if (!isValid) {
+         e.preventDefault(); // Prevent form submission
+       }
+     });
+   });
   // Clear any existing session on signin page load
   localStorage.removeItem('etee_current_user');
   
