@@ -164,7 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
           return response.json();
         })
         .then(coop => {
-          // Update the span with ID "coopLocationTitle" with the coop location
           const coopLocationTitle = document.getElementById('coopLocationTitle');
           if (coopLocationTitle) {
             coopLocationTitle.textContent = `${coop.Location} Chicken Coop`;
@@ -212,8 +211,10 @@ document.addEventListener("DOMContentLoaded", () => {
               size: coop.Size,
               capacity: coop.Capacity,
               dateAdded: coop.DateInstalled,
-              status: coop.Status
+              status: coop.Status || 'Active' // Default to Active if not specified
             };
+            
+            console.log("Rendering coop with status:", coopData.status); // Debug log
             
             const coopCard = createCoopCard(coopData);
             coopsGrid.appendChild(coopCard);
@@ -242,77 +243,80 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function createCoopCard(coop) {
-    const card = document.createElement('div');
-    card.className = 'coop-card';
-    card.dataset.coopId = coop.id;
-    
-    card.innerHTML = `
-      <div class="coop-header">
-        <div class="coop-title">
-          <i class='bx bxs-building-house'></i>
-          ${coop.location}
-        </div>
-        <div class="coop-actions">
-          <button class="coop-action-btn edit-btn" title="Edit">
-            <i class='bx bx-edit'></i>
-          </button>
-          <button class="coop-action-btn delete-btn" title="Delete">
-            <i class='bx bx-trash'></i>
-          </button>
-        </div>
+ // Update createCoopCard to properly display the status
+function createCoopCard(coop) {
+  const card = document.createElement('div');
+  card.className = 'coop-card';
+  card.dataset.coopId = coop.id;
+  
+  // Determine status class and icon
+  const isActive = coop.status === 'Active';
+  const statusClass = isActive ? 'status-active' : 'status-inactive';
+  const statusIcon = isActive ? 'bx-check-circle' : 'bx-x-circle';
+  
+  card.innerHTML = `
+    <div class="coop-header">
+      <div class="coop-title">
+        <i class='bx bxs-building-house'></i>
+        ${coop.location}
       </div>
-      <div class="coop-info">
-        <div class="info-row">
-          <i class='bx bx-id-card'></i>
-          <span>Coop ID: ${coop.id}</span>
-        </div>
-        <div class="info-row">
-          <i class='bx bx-ruler'></i>
-          <span>Size: ${coop.size} sq ft</span>
-        </div>
-        <div class="info-row">
-          <i class='bx bxs-group'></i>
-          <span>Count: ${coop.capacity} Chicken/s</span>
-        </div>
-        <div class="info-row">
-          <i class='bx bx-calendar'></i>
-          <span>Added: ${new Date(coop.dateAdded).toLocaleDateString()}</span>
-        </div>
+      <div class="coop-actions">
+        <button class="coop-action-btn edit-coop-btn" title="Edit" data-coop-id="${coop.id}">
+          <i class='bx bx-edit'></i>
+        </button>
+        <button class="coop-action-btn delete-btn" title="Delete">
+          <i class='bx bx-trash'></i>
+        </button>
       </div>
-      <div class="coop-status">
-        <span class="status-badge status-active">
-          <i class='bx bx-check-circle'></i> Active
-        </span>
+    </div>
+    <div class="coop-info">
+      <div class="info-row">
+        <i class='bx bx-id-card'></i>
+        <span>Coop ID: ${coop.id}</span>
       </div>
-      <button class="coop-action-button view-dashboard-btn">
-        <i class='bx bxs-dashboard'></i> View Coop
-      </button>
-    `;
-    
-    // Add event handlers (rest of the function remains the same)
-    const viewDashboardBtn = card.querySelector('.view-dashboard-btn');
-    viewDashboardBtn.addEventListener('click', () => {
-      showWaterQualityManagement(coop.id);
-    });
-    
-    const deleteBtn = card.querySelector('.delete-btn');
-    deleteBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to delete this chicken coop?')) {
-        deleteCoop(coop.id);
-      }
-    });
-    
-    const editBtn = card.querySelector('.edit-btn');
-    editBtn.addEventListener('click', () => {
-      openEditCoopModal(coop.id);
-    });
-    
-    return card;
-  }
-
-
- 
+      <div class="info-row">
+        <i class='bx bx-ruler'></i>
+        <span>Size: ${coop.size} sq ft</span>
+      </div>
+      <div class="info-row">
+        <i class='bx bxs-group'></i>
+        <span>Count: ${coop.capacity} chicken/s</span>
+      </div>
+      <div class="info-row">
+        <i class='bx bx-calendar'></i>
+        <span>Added: ${new Date(coop.dateAdded).toLocaleDateString()}</span>
+      </div>
+    </div>
+    <div class="coop-status">
+      <span class="status-badge ${statusClass}">
+        <i class='bx ${statusIcon}'></i> ${coop.status}
+      </span>
+    </div>
+    <button class="coop-action-button view-dashboard-btn">
+      <i class='bx bxs-dashboard'></i> View Coop
+    </button>
+  `;
+  
+  // Add event handlers
+  const viewDashboardBtn = card.querySelector('.view-dashboard-btn');
+  viewDashboardBtn.addEventListener('click', () => {
+    showWaterQualityManagement(coop.id);
+  });
+  
+  const deleteBtn = card.querySelector('.delete-btn');
+  deleteBtn.addEventListener('click', () => {
+    if (confirm('Are you sure you want to delete this chicken coop?')) {
+      deleteCoop(coop.id);
+    }
+  });
+  
+  const editBtn = card.querySelector('.edit-coop-btn');
+  editBtn.addEventListener('click', () => {
+    openEditCoopModal(coop.id);
+  });
+  
+  return card;
+}
 
   // Update deleteCoop function to use API
 function deleteCoop(coopId) {
@@ -371,20 +375,69 @@ function deleteCoop(coopId) {
   }
 
   function openEditCoopModal(coopId) {
-    const coops = getUserData('etee_coops');
-    const coop = coops.find(c => c.id === coopId);
+    fetch(`/api/coops/${coopId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch coop details');
+        }
+        return response.json();
+      })
+      .then(coop => {
+        // Populate form fields with coop data
+        document.getElementById('editCoopId').value = coop.CoopID;
+        document.getElementById('editCoopLocation').value = coop.Location;
+        document.getElementById('editCoopSize').value = coop.Size;
+        document.getElementById('editCoopCount').value = coop.Capacity;
+        
+        // Update the status toggle based on current status
+        const statusToggleContainer = document.getElementById('statusToggleContainer');
+        
+        // Create the status toggle HTML
+        statusToggleContainer.innerHTML = `
+          <div class="status-toggle-wrapper">
+            <input type="radio" id="statusActive" name="coopStatus" value="Active" ${coop.Status === 'Active' ? 'checked' : ''}>
+            <input type="radio" id="statusInactive" name="coopStatus" value="Inactive" ${coop.Status === 'Inactive' ? 'checked' : ''}>
+            <label for="statusActive" class="toggle-btn active-btn">Active</label>
+            <label for="statusInactive" class="toggle-btn inactive-btn">Inactive</label>
+            <span class="slider"></span>
+          </div>
+        `;
+        
+        // Show the modal
+        const editCoopModal = document.getElementById('editCoopModal');
+        editCoopModal.classList.add('active');
+        
+        // Initialize toggle behavior
+        initStatusToggle();
+      })
+      .catch(error => {
+        console.error('Error fetching coop details:', error);
+        showNotification('Failed to load coop details', 'error');
+      });
+  }
+  function initStatusToggle() {
+    const statusActive = document.getElementById('statusActive');
+    const statusInactive = document.getElementById('statusInactive');
+    const slider = document.querySelector('.slider');
     
-    if (coop) {
-      document.getElementById('editCoopId').value = coop.id;
-      document.getElementById('editCoopLocation').value = coop.location;
-      document.getElementById('editCoopSize').value = coop.size;
-      document.getElementById('editCoopCapacity').value = coop.capacity;
+    // Position the slider based on the selected status
+    if (statusActive && statusInactive && slider) {
+      function updateSliderPosition() {
+        if (statusActive.checked) {
+          slider.style.left = '0';
+        } else {
+          slider.style.left = '50%';
+        }
+      }
       
-      const editCoopModal = document.getElementById('editCoopModal');
-      editCoopModal.classList.add('active');
+      // Initial position
+      updateSliderPosition();
+      
+      // Update position when changed
+      statusActive.addEventListener('change', updateSliderPosition);
+      statusInactive.addEventListener('change', updateSliderPosition);
     }
   }
-
   function closeModal(modal) {
     modal.classList.remove('active');
     const form = modal.querySelector('form');
@@ -475,7 +528,7 @@ if (editCoopForm) {
     const coopId = document.getElementById('editCoopId').value;
     const location = document.getElementById('editCoopLocation').value;
     const size = parseFloat(document.getElementById('editCoopSize').value);
-    const capacity = parseInt(document.getElementById('editCoopCapacity').value);
+    const capacity = parseInt(document.getElementById('editCoopCount').value);
     
     if (!location || isNaN(size) || isNaN(capacity)) {
       showNotification('Please fill in all fields correctly', 'error');
@@ -700,6 +753,98 @@ if (dataEntryForm) {
     });
   });
 }
+
+// Initialize the edit form submission
+function initEditCoopForm() {
+  const editCoopForm = document.getElementById('editCoopForm');
+  if (editCoopForm) {
+    editCoopForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const coopId = document.getElementById('editCoopId').value;
+      const location = document.getElementById('editCoopLocation').value;
+      const size = parseFloat(document.getElementById('editCoopSize').value);
+      const capacity = parseInt(document.getElementById('editCoopCount').value);
+      
+      // Get the selected status from the radio buttons
+      const status = document.querySelector('input[name="coopStatus"]:checked').value;
+      
+      console.log("Submitting with status:", status); // Debug log
+      
+      if (!location || isNaN(size) || isNaN(capacity)) {
+        showNotification('Please fill in all fields correctly', 'error');
+        return;
+      }
+      
+      // Send update request to the server
+      fetch(`/api/coops/${coopId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          location,
+          size,
+          capacity: capacity,
+          status: status // Make sure this is included!
+        }),
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || 'Failed to update coop');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Close the modal
+          const modal = document.getElementById('editCoopModal');
+          modal.classList.remove('active');
+          
+          // Force reload the coops to refresh the UI
+          loadCoops();
+          
+          showNotification('Chicken coop updated successfully!', 'success');
+        } else {
+          showNotification(data.error || 'Failed to update coop', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error updating coop:', error);
+        showNotification(error.message || 'Failed to update coop', 'error');
+      });
+    });
+  }
+  
+  // Set up close and cancel buttons
+  const modal = document.getElementById('editCoopModal');
+  if (modal) {
+    const closeButton = modal.querySelector('.close-button');
+    const cancelButton = modal.querySelector('.cancel-button');
+    
+    if (closeButton) {
+      closeButton.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    }
+    
+    if (cancelButton) {
+      cancelButton.addEventListener('click', () => {
+        modal.classList.remove('active');
+      });
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('active');
+      }
+    });
+  }
+}
+
 
 
 // Initialize the delete confirmation modal events
@@ -1246,6 +1391,17 @@ if (profileEditForm) {
           setTimeout(() => form.reset(), 300);
         }
       });
+    }
+  });
+
+  initEditCoopForm();
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('edit-coop-btn') || 
+        e.target.closest('.edit-coop-btn')) {
+      const btn = e.target.classList.contains('edit-coop-btn') ? 
+                  e.target : e.target.closest('.edit-coop-btn');
+      const coopId = btn.dataset.coopId;
+      openEditCoopModal(coopId);
     }
   });
 });

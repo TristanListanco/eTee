@@ -234,6 +234,18 @@
               <input type="number" id="coopCapacity" min="1" placeholder="Enter bird capacity" required>
             </div>
           </div>
+
+          <div class="form-group">
+            
+            <label for="editCoopStatus">Status</label>
+            <div class="status-toggle">
+              <input type="checkbox" id="editCoopStatus" class="toggle-input">
+              <label for="editCoopStatus" class="toggle-label">
+                <span class="toggle-on">Active</span>
+                <span class="toggle-off">Inactive</span>
+              </label>
+            </div>
+          </div>
           
           <div class="form-actions">
             <button type="button" class="cancel-button">Cancel</button>
@@ -247,45 +259,51 @@
   </div>
 
   <!-- Edit Coop Modal -->
-  <div id="editCoopModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Edit Chicken Coop</h3>
-        <button class="close-button">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="editCoopForm">
-          <input type="hidden" id="editCoopId" name="coopId">
-          
-          <div class="form-row">
-            <div class="form-group">
-              <label for="editCoopLocation">Location</label>
-              <input type="text" id="editCoopLocation" placeholder="Enter coop location" required>
-            </div>
+
+<div id="editCoopModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3><i class='bx bxs-edit'></i> Edit Chicken Coop</h3>
+      <button class="close-button">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="editCoopForm">
+        <input type="hidden" id="editCoopId" name="coopId">
+        
+        <div class="form-group">
+          <label for="editCoopLocation">Location</label>
+          <input type="text" id="editCoopLocation" class="form-control" placeholder="Enter coop location" required>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="editCoopSize">Size (sq ft)</label>
+            <input type="number" id="editCoopSize" class="form-control" min="1" placeholder="Enter coop size" required>
           </div>
           
-          <div class="form-row">
-            <div class="form-group">
-              <label for="editCoopSize">Size (sq ft)</label>
-              <input type="number" id="editCoopSize" min="1" placeholder="Enter coop size" required>
-            </div>
-            
-            <div class="form-group">
-              <label for="editCoopCapacity">Capacity (birds)</label>
-              <input type="number" id="editCoopCapacity" min="1" placeholder="Enter bird capacity" required>
-            </div>
+          <div class="form-group">
+            <label for="editCoopCount">Count (Chicken/s)</label>
+            <input type="number" id="editCoopCount" class="form-control" min="1" placeholder="Enter chicken count" required>
           </div>
-          
-          <div class="form-actions">
-            <button type="button" class="cancel-button">Cancel</button>
-            <button type="submit" class="submit-button">
-              <i class='bx bx-save'></i> Save Changes
-            </button>
+        </div>
+        
+        <div class="form-group">
+          <label for="statusToggleContainer">Status</label>
+          <div id="statusToggleContainer">
+            <!-- Toggle will be inserted here dynamically -->
           </div>
-        </form>
-      </div>
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="cancel-button">Cancel</button>
+          <button type="submit" class="submit-button">
+            <i class='bx bx-save'></i> Save Changes
+          </button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
 
   <!-- Data Entry Modal -->
   <div id="dataEntryModal" class="modal">

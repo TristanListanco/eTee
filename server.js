@@ -241,44 +241,52 @@ app.post('/api/coops', (req, res) => {
     });
   });
 
-  // Update a coop
+// Update a coop
 app.put('/api/coops/:id', (req, res) => {
-    const coopId = req.params.id;
-    const { location, size, capacity } = req.body;
-    
-    if (!location || !size || !capacity) {
-      return res.status(400).json({ error: "Required fields missing" });
-    }
+  const coopId = req.params.id;
+  const { location, size, capacity, status } = req.body;
   
-    const coopData = {
-      Location: location,
-      Size: size,
-      Capacity: capacity
-    };
+  console.log("Received update request with status:", status); // Debug log
   
-    connection.query(
-      'UPDATE ChickenCoop SET ? WHERE CoopID = ?',
-      [coopData, coopId],
-      (err, result) => {
-        if (err) {
-          console.error('Error updating coop:', err);
-          return res.status(500).json({ error: "Failed to update coop" });
-        }
-        
-        if (result.affectedRows === 0) {
-          return res.status(404).json({ error: "Coop not found" });
-        }
-        
-        res.json({
-          success: true,
-          coop: {
-            id: parseInt(coopId),
-            ...coopData
-          }
-        });
+  if (!location || !size || !capacity) {
+    return res.status(400).json({ error: "Required fields missing" });
+  }
+
+  const coopData = {
+    Location: location,
+    Size: size,
+    Capacity: capacity
+  };
+  
+  // Only add Status if it's provided
+  if (status) {
+    coopData.Status = status;
+  }
+
+  connection.query(
+    'UPDATE ChickenCoop SET ? WHERE CoopID = ?',
+    [coopData, coopId],
+    (err, result) => {
+      if (err) {
+        console.error('Error updating coop:', err);
+        return res.status(500).json({ error: "Failed to update coop" });
       }
-    );
-  });
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Coop not found" });
+      }
+      
+      // Return the updated data
+      res.json({
+        success: true,
+        coop: {
+          id: parseInt(coopId),
+          ...coopData
+        }
+      });
+    }
+  );
+});
 
   // Delete a coop
 app.delete('/api/coops/:id', (req, res) => {
