@@ -562,9 +562,11 @@ function initChartControls() {
   }
 
  // Update createCoopCard to properly display the status
-function createCoopCard(coop) {
+ function createCoopCard(coop) {
   const card = document.createElement('div');
-  card.className = 'coop-card';
+  
+  // Add inactive class if the coop status is Inactive
+  card.className = `coop-card ${coop.status === 'Inactive' ? 'inactive' : ''}`;
   card.dataset.coopId = coop.id;
   
   // Determine status class and icon
@@ -607,7 +609,7 @@ function createCoopCard(coop) {
     </div>
     <div class="coop-status">
       <span class="status-badge ${statusClass}">
-        <i class='bx ${statusIcon}'></i> ${coop.status}
+        <i class='bx ${statusIcon}'></i> ${coop.status || 'Active'}
       </span>
     </div>
     <button class="coop-action-button view-dashboard-btn">

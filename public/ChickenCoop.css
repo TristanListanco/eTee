@@ -45,7 +45,26 @@
   gap: 1.5rem;
   margin-top: 2rem;
 }
+.coop-card.inactive {
+  opacity: 0.6;
+  filter: grayscale(30%);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
 
+.coop-card.inactive:hover {
+  opacity: 0.8;
+  filter: grayscale(10%);
+}
+
+/* Improve status badge for inactive state */
+.status-badge.status-inactive {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.status-badge.status-inactive i {
+  color: #ef4444;
+}
 .coop-card {
   background-color: var(--card-bg);
   border-radius: var(--border-radius);
