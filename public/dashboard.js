@@ -41,7 +41,83 @@ function setUserData(baseKey, data) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-
+  const sortButton = document.getElementById('sortReadingsBtn');
+  
+  if (sortButton) {
+    // Remove any existing event listeners to avoid duplicates
+    const newSortButton = sortButton.cloneNode(true);
+    sortButton.parentNode.replaceChild(newSortButton, sortButton);
+    
+    // Add event listener to the new button
+    newSortButton.addEventListener('click', function() {
+      console.log('Sort button clicked');
+      const currentOrder = this.getAttribute('data-sort');
+      const newOrder = currentOrder === 'desc' ? 'asc' : 'desc';
+      
+      // Update button text and attribute
+      this.setAttribute('data-sort', newOrder);
+      this.innerHTML = newOrder === 'desc' 
+        ? '<i class="bx bx-sort-alt-2"></i> Newest First' 
+        : '<i class="bx bx-sort-alt-2"></i> Oldest First';
+      
+      // Get current coop ID and fetch readings to sort
+      if (currentCoopId) {
+        console.log('Sorting readings for coop ID:', currentCoopId);
+        
+        // Fetch the readings from your API
+        fetch(`/api/readings?coopId=${currentCoopId}`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to fetch readings for sorting');
+            }
+            return response.json();
+          })
+          .then(readings => {
+            console.log('Fetched readings for sorting:', readings.length);
+            
+            // Sort readings based on timestamp
+            readings.sort((a, b) => {
+              const timestampA = new Date(a.TimeStamp);
+              const timestampB = new Date(b.TimeStamp);
+              return newOrder === 'desc' ? timestampB - timestampA : timestampA - timestampB;
+            });
+            
+            // Get current sensor type filter
+            const sensorSelector = document.getElementById('sensorSelector');
+            const sensorType = sensorSelector ? sensorSelector.value : 'temperature';
+            
+            // Filter readings by current sensor type
+            const filteredReadings = readings.filter(reading => {
+              switch(sensorType) {
+                case 'temperature':
+                  return reading.Temperature !== null && reading.Temperature !== undefined;
+                case 'humidity':
+                  return reading.Humidity !== null && reading.Humidity !== undefined;
+                case 'co2':
+                  return reading.CO2Level !== null && reading.CO2Level !== undefined;
+                case 'ammonia':
+                  return reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined;
+                default:
+                  return true;
+              }
+            });
+            
+            // Update activity table with sorted readings
+            console.log('Updating table with sorted readings:', filteredReadings.length);
+            updateActivityTable(filteredReadings);
+          })
+          .catch(error => {
+            console.error('Error sorting readings:', error);
+            showNotification('Failed to sort readings', 'error');
+          });
+      } else {
+        console.error('No coop ID available for sorting');
+        showNotification('Error: Could not sort readings', 'error');
+      }
+    });
+  } else {
+    console.error('Sort button not found');
+  }
   //Chart
 // Global variable to store chart instance
 let sensorChart = null;
@@ -758,6 +834,35 @@ function deleteCoop(coopId) {
       statusInactive.addEventListener('change', updateSliderPosition);
     }
   }
+
+  // Function to sort table rows by date
+function sortReadingsTable(sortOrder) {
+  const tableBody = document.querySelector('tbody');
+  if (!tableBody) return;
+  
+  const rows = Array.from(tableBody.querySelectorAll('tr:not(#emptyStateRow)'));
+  if (rows.length <= 1) return; // No need to sort if 0 or 1 row
+  
+  // Sort rows based on date
+  rows.sort((rowA, rowB) => {
+    // Extract date strings from the first cell in each row
+    const dateTextA = rowA.querySelector('td:first-child').textContent;
+    const dateTextB = rowB.querySelector('td:first-child').textContent;
+    
+    // Parse dates (handles format like "May 6, 2025 • 17:00")
+    const dateA = new Date(dateTextA.split('•')[0].trim());
+    const dateB = new Date(dateTextB.split('•')[0].trim());
+    
+    // Sort ascending or descending
+    return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+  });
+  
+  // Remove all existing rows
+  rows.forEach(row => row.remove());
+  
+  // Append rows in the new order
+  rows.forEach(row => tableBody.appendChild(row));
+}
   function closeModal(modal) {
     modal.classList.remove('active');
     const form = modal.querySelector('form');

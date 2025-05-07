@@ -1478,6 +1478,40 @@ tbody tr:hover {
   animation: ripple 0.4s ease-out;
 }
 
+/* Add these styles to your Dashboard.css file */
+.sensor-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sort-button {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-color);
+}
+
+.sort-button i {
+  margin-right: 5px;
+  font-size: 1rem;
+}
+
+.sort-button:hover {
+  background-color: var(--bg-light);
+  border-color: var(--primary-color);
+}
+
+.sort-button:active {
+  transform: translateY(1px);
+}
+
 @keyframes ripple {
   0% {
     transform: scale(0, 0) translate(-50%, -50%);

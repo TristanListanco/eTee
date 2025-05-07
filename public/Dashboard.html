@@ -158,44 +158,49 @@
         </div>
         
         <!-- Water Quality Sensor Section -->
-        <section class="data-section">
-          <div class="section-header">
-            <h2><i class='bx bx-table'></i>Sensor Readings</h2>
-            <div class="sensor-selector">
-              <label for="sensorSelector">View readings for:</label>
-              <select id="sensorSelector">
-                <option value="temperature" selected>Temperature</option>
-                <option value="humidity">Humidity</option>
-                <option value="co2">CO₂ Level</option>
-                <option value="ammonia">Ammonia Level</option>
-              </select>
-            </div>
-          </div>
-          <div class="table-wrapper">
-           <table>
-  <thead>
-    <tr>
-      <th>Date & Time</th>
-      <th>Reading ID</th>
-      <th>Value</th>
-      <th>Status</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr id="emptyStateRow">
-      <td colspan="6" style="text-align: center; padding: 2rem;">
-        <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
-        <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
-      </td>
-    </tr>
-  </tbody>
-</table>
-          </div>
-        </section>
-        
-       
-
+<!-- Water Quality Sensor Section -->
+<section class="data-section">
+  <div class="section-header">
+    <h2><i class='bx bx-table'></i>Sensor Readings</h2>
+    <div class="sensor-controls">
+      <!-- Sort button added here -->
+      <button id="sortReadingsBtn" class="sort-button" data-sort="desc">
+        <i class='bx bx-sort-alt-2'></i> Newest First
+      </button>
+      
+      <div class="sensor-selector">
+        <label for="sensorSelector">View readings for:</label>
+        <select id="sensorSelector">
+          <option value="temperature" selected>Temperature</option>
+          <option value="humidity">Humidity</option>
+          <option value="co2">CO₂ Level</option>
+          <option value="ammonia">Ammonia Level</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Date & Time</th>
+          <th>Reading ID</th>
+          <th>Value</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr id="emptyStateRow">
+          <td colspan="6" style="text-align: center; padding: 2rem;">
+            <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+            <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
       </div>
     </main>
   </div>
