@@ -1443,7 +1443,67 @@ tbody tr:hover {
   background-color: var(--danger-color);
 }
 }
+/* Add these to your Dashboard.css file */
+.action-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
 
+.button-clicked {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+.button-hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.action-button::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+.action-button:active::after {
+  animation: ripple 0.4s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0) translate(-50%, -50%);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(20, 20) translate(-50%, -50%);
+    opacity: 0;
+  }
+}
+
+/* Improve modal animation speed */
+.modal.active .modal-content {
+  animation: modal-in 0.25s forwards;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 
 /* Add these variables for color manipulation */

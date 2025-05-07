@@ -774,6 +774,73 @@ function deleteCoop(coopId) {
     }
   }
 
+  // Optimize the Add Data button click handler
+function initializeAddDataButton() {
+  const addDataBtn = document.getElementById('addDataBtn');
+  
+  if (addDataBtn) {
+    // Remove any existing event listeners to prevent duplicates
+    const newButton = addDataBtn.cloneNode(true);
+    addDataBtn.parentNode.replaceChild(newButton, addDataBtn);
+    
+    // Add a new optimized event listener
+    newButton.addEventListener('click', function(e) {
+      // Prevent any default behavior
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Provide immediate visual feedback
+      this.classList.add('button-clicked');
+      
+      // Open the data entry modal
+      openDataModal();
+      
+      // Remove the visual feedback after animation completes
+      setTimeout(() => {
+        this.classList.remove('button-clicked');
+      }, 300);
+    });
+    
+    // Add hover event listeners for better responsiveness
+    newButton.addEventListener('mouseenter', function() {
+      this.classList.add('button-hover');
+    });
+    
+    newButton.addEventListener('mouseleave', function() {
+      this.classList.remove('button-hover');
+    });
+  }
+}
+
+// Optimize the data modal opening function
+function openDataModal() {
+  const now = new Date();
+  const jsonDateTime = now.toISOString().replace('Z', '').replace('T', ' ').substring(0, 19);
+  
+  const dataEntryModal = document.getElementById('dataEntryModal');
+  
+  // Pre-populate the timestamp field
+  const currentDateTimeField = document.getElementById('currentDateTime');
+  if (currentDateTimeField) {
+    currentDateTimeField.value = jsonDateTime;
+  }
+  
+  // Show the modal immediately
+  if (dataEntryModal) {
+    dataEntryModal.classList.add('active');
+    
+    // Pre-focus the first input field for better usability
+    setTimeout(() => {
+      const firstInput = dataEntryModal.querySelector('input:not([readonly])');
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 100);
+  }
+}
+
+// Add these styles to your CSS
+
   // Update the addCoopForm to use API
 const addCoopForm = document.getElementById('addCoopForm');
 if (addCoopForm) {
@@ -1861,25 +1928,147 @@ if (profileEditForm) {
       handleSensorTypeChange();
     });
   }
+
+  initializeAddDataButton();
+  initDataEntryForm();
+
 });
+
+function initDataEntryForm() {
+  const dataEntryForm = document.getElementById('dataEntryForm');
+  if (dataEntryForm) {
+    dataEntryForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Store current sensor type selection before submission
+      const chartDataSelector = document.getElementById('chartDataSelector');
+      const sensorSelector = document.getElementById('sensorSelector');
+      
+      // Save the current selections
+      const currentChartType = chartDataSelector ? chartDataSelector.value : 'temperature';
+      const currentTableType = sensorSelector ? sensorSelector.value : 'temperature';
+      
+      // Get form data
+      const dateTimeField = document.getElementById('currentDateTime');
+      const dateTime = dateTimeField.value;
+      const temperature = parseFloat(document.getElementById('temperature').value);
+      const humidity = parseFloat(document.getElementById('humidity').value);
+      const co2 = parseInt(document.getElementById('co2').value);
+      const ammonia = parseFloat(document.getElementById('ammonia').value);
+      
+      // Format timestamp for MySQL
+      let formattedTimestamp = dateTime;
+      if (dateTime.includes('T')) {
+        formattedTimestamp = dateTime.replace('T', ' ').split('.')[0];
+      }
+      
+      // Save sensor reading data
+      const readingData = {
+        coopId: currentCoopId,
+        temperature,
+        humidity,
+        co2Level: co2,
+        ammoniaLevel: ammonia,
+        timestamp: formattedTimestamp
+      };
+      
+      // Save the sensor reading
+      fetch('/api/readings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(readingData),
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw new Error(data.error || 'Failed to save sensor readings');
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Successfully saved the reading
+        const submitBtn = dataEntryForm.querySelector('.submit-button');
+        if (submitBtn) {
+          submitBtn.innerHTML = '<i class="bx bx-check"></i> Saved';
+          submitBtn.classList.add('success-animation');
+        }
+        
+        // Close the modal
+        setTimeout(() => {
+          if (submitBtn) {
+            submitBtn.innerHTML = '<i class="bx bx-save"></i> Save Data';
+            submitBtn.classList.remove('success-animation');
+          }
+          closeModal(document.getElementById('dataEntryModal'));
+          
+          // Show notification
+          showNotification('New data added successfully!', 'success');
+          
+          // Reload the dashboard data while preserving current sensor types
+          loadDashboardDataWithSelection(currentChartType, currentTableType);
+        }, 1000);
+      })
+      .catch(error => {
+        showNotification(error.message || 'Failed to save data', 'error');
+      });
+    });
+  }
+}
 
 // Delete sensor reading
 function deleteSensorReading(readingId) {
+  if (!readingId) {
+    console.error('No reading ID provided for deletion');
+    showNotification('Error: No reading ID provided', 'error');
+    return;
+  }
+  
+  // Store current selections before deletion
+  const chartDataSelector = document.getElementById('chartDataSelector');
+  const sensorSelector = document.getElementById('sensorSelector');
+  
+  const currentChartType = chartDataSelector ? chartDataSelector.value : 'temperature';
+  const currentTableType = sensorSelector ? sensorSelector.value : 'temperature';
+  
+  console.log('Deleting reading with ID:', readingId);
+  
   fetch(`/api/readings/${readingId}`, {
     method: 'DELETE'
   })
-  .then(response => response.json())
+  .then(response => {
+    console.log('Delete response status:', response.status);
+    
+    // Parse the JSON response
+    return response.json().then(data => {
+      // Check if the response is successful
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete reading');
+      }
+      return data;
+    });
+  })
   .then(data => {
+    console.log('Delete response data:', data);
+    
     if (data.success) {
-      loadDashboardData();
-      showNotification('Reading deleted successfully!', 'success');
+      // Close the modal if it's still open
+      const modal = document.getElementById('deleteConfirmationModal');
+      if (modal) modal.classList.remove('active');
+      
+      // Reload dashboard data with preserved selections
+      loadDashboardDataWithSelection(currentChartType, currentTableType);
+      
+      showNotification('Sensor reading deleted successfully!', 'success');
     } else {
-      showNotification('Failed to delete reading', 'error');
+      showNotification(data.error || 'Failed to delete reading', 'error');
     }
   })
   .catch(error => {
     console.error('Error deleting reading:', error);
-    showNotification('Failed to delete reading', 'error');
+    showNotification(error.message || 'Failed to delete reading', 'error');
   });
 }
 
@@ -1892,6 +2081,78 @@ function generateReadingId(prefix) {
   }
   return result;
 }
+
+function loadDashboardDataWithSelection(chartType, tableType) {
+  if (!currentCoopId) return;
+  
+  // Fetch the readings from your API
+  fetch(`/api/readings?coopId=${currentCoopId}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch readings');
+      }
+      return response.json();
+    })
+    .then(readings => {
+      if (!readings || readings.length === 0) {
+        // No readings available yet
+        setZeroValues();
+        showEmptyState();
+      } else {
+        // Update dashboard with the latest readings
+        updateDashboardCards(readings[0]);
+        
+        // Update table with filtered data based on current selection
+        if (tableType) {
+          // First set the dropdown to match the saved selection
+          const sensorSelector = document.getElementById('sensorSelector');
+          if (sensorSelector && sensorSelector.value !== tableType) {
+            sensorSelector.value = tableType;
+          }
+          
+          // Filter readings for table display
+          const tableReadings = readings.filter(reading => {
+            switch(tableType) {
+              case 'temperature':
+                return reading.Temperature !== null && reading.Temperature !== undefined;
+              case 'humidity':
+                return reading.Humidity !== null && reading.Humidity !== undefined;
+              case 'co2':
+                return reading.CO2Level !== null && reading.CO2Level !== undefined;
+              case 'ammonia':
+                return reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined;
+              default:
+                return true;
+            }
+          });
+          
+          updateActivityTable(tableReadings);
+        } else {
+          updateActivityTable(readings);
+        }
+        
+        // Update chart with the right type
+        if (chartType) {
+          // First set the dropdown to match the saved selection
+          const chartDataSelector = document.getElementById('chartDataSelector');
+          if (chartDataSelector && chartDataSelector.value !== chartType) {
+            chartDataSelector.value = chartType;
+          }
+          
+          // Update chart with the correct type
+          updateChart(readings, chartType);
+        } else {
+          const defaultChartType = 'temperature';
+          updateChart(readings, defaultChartType);
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error loading dashboard data:', error);
+      showNotification('Failed to load sensor data', 'error');
+    });
+}
+
 
 function deleteSensorReading(readingId) {
   fetch(`/api/readings/${readingId}`, {
