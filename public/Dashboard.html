@@ -17,6 +17,7 @@
   <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
   
   <!-- Sidebar styles -->
@@ -143,25 +144,18 @@
 
         
         <!-- Chart -->
-        <!-- <div class="chart-container">
+        <div class="chart-container">
           <div class="chart-header">
             <div class="chart-title">Data Visualization</div>
-            <div class="chart-controls">
-              <select id="chartDataSelector">
-                <option value="temperature">Temperature</option>
-                <option value="humidity">Humidity</option>
-                <option value="co2">CO₂ Level</option>
-                <option value="ammonia">Ammonia Level</option>
-              </select>
-            </div>
+           
           </div>
-          <div class="chart">
+          <div class="chart" style="height: 300px;">
             <div class="chart-placeholder">
               <i class='bx bx-line-chart'></i>
               <p>Chart data will be displayed here</p>
             </div>
           </div>
-        </div> -->
+        </div>
         
         <!-- Water Quality Sensor Section -->
         <section class="data-section">
@@ -170,7 +164,6 @@
             <div class="sensor-selector">
               <label for="sensorSelector">View readings for:</label>
               <select id="sensorSelector">
-                <option value="all">All Sensors</option>
                 <option value="temperature" selected>Temperature</option>
                 <option value="humidity">Humidity</option>
                 <option value="co2">CO₂ Level</option>
@@ -259,7 +252,6 @@
   </div>
 
   <!-- Edit Coop Modal -->
-
 <div id="editCoopModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">

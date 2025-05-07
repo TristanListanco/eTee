@@ -41,6 +41,320 @@ function setUserData(baseKey, data) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  //Chart
+// Global variable to store chart instance
+let sensorChart = null;
+
+// Function to create or update the chart
+function updateChart(readings, sensorType = 'temperature') {
+  // Get chart container
+  const chartContainer = document.querySelector('.chart');
+  if (!chartContainer) {
+    console.error('Chart container not found');
+    return;
+  }
+  
+  // If no readings, show placeholder message
+  if (!readings || readings.length === 0) {
+    chartContainer.innerHTML = `
+      <div class="chart-placeholder">
+        <i class='bx bx-line-chart'></i>
+        <p>No ${sensorType} readings available. Click "Add Data" to record measurements.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Create canvas for the chart if it doesn't exist
+  let canvas = document.getElementById('sensorChart');
+  if (!canvas) {
+    // Clear container first
+    chartContainer.innerHTML = '';
+    canvas = document.createElement('canvas');
+    canvas.id = 'sensorChart';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    chartContainer.appendChild(canvas);
+  }
+  
+  // Filter and deduplicate readings based on selected sensor type
+  const processedIds = new Set();
+  const filteredReadings = readings.filter(reading => {
+    // Skip duplicate ReadingIDs
+    if (processedIds.has(reading.ReadingID)) {
+      return false;
+    }
+    
+    // Check if this reading has the requested sensor type
+    let hasValue = false;
+    switch(sensorType) {
+      case 'temperature':
+        hasValue = reading.Temperature !== null && reading.Temperature !== undefined;
+        break;
+      case 'humidity':
+        hasValue = reading.Humidity !== null && reading.Humidity !== undefined;
+        break;
+      case 'co2':
+        hasValue = reading.CO2Level !== null && reading.CO2Level !== undefined;
+        break;
+      case 'ammonia':
+        hasValue = reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined;
+        break;
+      default:
+        return false;
+    }
+    
+    // If it has the value, mark it as processed
+    if (hasValue) {
+      processedIds.add(reading.ReadingID);
+    }
+    
+    return hasValue;
+  });
+  
+  // If no filtered readings after deduplication, show placeholder
+  if (filteredReadings.length === 0) {
+    chartContainer.innerHTML = `
+      <div class="chart-placeholder">
+        <i class='bx bx-line-chart'></i>
+        <p>No ${sensorType} readings available. Click "Add Data" to record measurements.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Sort readings by timestamp
+  filteredReadings.sort((a, b) => new Date(a.TimeStamp) - new Date(b.TimeStamp));
+  
+  // Limit to last 10 readings for better visualization
+  const limitedReadings = filteredReadings.slice(-10);
+  
+  // Format timestamps for better readability
+  const labels = limitedReadings.map(reading => {
+    const date = new Date(reading.TimeStamp);
+    return date.toLocaleDateString() + ' ' + 
+           date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  });
+  
+  // Extract values based on sensor type
+  const values = limitedReadings.map(reading => {
+    switch(sensorType) {
+      case 'temperature':
+        return reading.Temperature;
+      case 'humidity':
+        return reading.Humidity;
+      case 'co2':
+        return reading.CO2Level;
+      case 'ammonia':
+        return reading.AmmoniaLevel;
+      default:
+        return 0;
+    }
+  });
+  
+  // Determine chart colors based on sensor type
+  let barColor, borderColor;
+  switch(sensorType) {
+    case 'temperature':
+      barColor = 'rgba(255, 99, 132, 0.7)';
+      borderColor = 'rgb(255, 99, 132)';
+      break;
+    case 'humidity':
+      barColor = 'rgba(54, 162, 235, 0.7)';
+      borderColor = 'rgb(54, 162, 235)';
+      break;
+    case 'co2':
+      barColor = 'rgba(255, 206, 86, 0.7)';
+      borderColor = 'rgb(255, 206, 86)';
+      break;
+    case 'ammonia':
+      barColor = 'rgba(75, 192, 192, 0.7)';
+      borderColor = 'rgb(75, 192, 192)';
+      break;
+    default:
+      barColor = 'rgba(255, 136, 0, 0.7)';
+      borderColor = 'rgb(255, 136, 0)';
+  }
+  
+  // Prepare chart data
+  const chartData = {
+    labels: labels,
+    datasets: [{
+      label: getChartLabel(sensorType),
+      data: values,
+      backgroundColor: barColor,
+      borderColor: borderColor,
+      borderWidth: 1,
+      barPercentage: 0.8,
+      categoryPercentage: 0.9
+    }]
+  };
+  
+  // Enhanced chart options for better visualization
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: getChartLabel(sensorType),
+          font: {
+            weight: 'bold'
+          }
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Date & Time',
+          font: {
+            weight: 'bold'
+          }
+        },
+        grid: {
+          display: false
+        }
+      }
+    },
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: function(tooltipItems) {
+            return tooltipItems[0].label;
+          },
+          label: function(context) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              switch(sensorType) {
+                case 'temperature':
+                  label += context.parsed.y + '°C';
+                  break;
+                case 'humidity':
+                  label += context.parsed.y + '%';
+                  break;
+                case 'co2':
+                case 'ammonia':
+                  label += context.parsed.y + ' ppm';
+                  break;
+                default:
+                  label += context.parsed.y;
+              }
+            }
+            return label;
+          }
+        }
+      },
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          font: {
+            size: 12
+          }
+        }
+      }
+    },
+    animation: {
+      duration: 1000,
+      easing: 'easeOutQuart'
+    }
+  };
+  
+  // Destroy previous chart instance if it exists
+  // FIX: Use conditional check to prevent TypeError
+  try {
+    // Check if Chart.js global instance exists
+    if (typeof Chart !== 'undefined') {
+      // Get all chart instances
+      const chartInstance = Chart.getChart(canvas);
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+    } else if (window.sensorChart && typeof window.sensorChart.destroy === 'function') {
+      window.sensorChart.destroy();
+    } else if (sensorChart && typeof sensorChart.destroy === 'function') {
+      sensorChart.destroy();
+    }
+  } catch (error) {
+    console.error("Error destroying chart:", error);
+    // If error occurs, remove canvas and create new one
+    chartContainer.innerHTML = '';
+    canvas = document.createElement('canvas');
+    canvas.id = 'sensorChart';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    chartContainer.appendChild(canvas);
+  }
+  
+  // Create new chart
+  const ctx = canvas.getContext('2d');
+  
+  // Use try-catch to handle potential Chart.js initialization errors
+  try {
+    // Store chart reference using variable that matches your existing code
+    sensorChart = new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: options
+    });
+    
+    // Also store reference in window object for broader accessibility
+    window.sensorChart = sensorChart;
+    
+    console.log('Chart successfully created/updated');
+  } catch (error) {
+    console.error('Error creating chart:', error);
+    chartContainer.innerHTML = `
+      <div class="chart-placeholder">
+        <i class='bx bx-error-circle'></i>
+        <p>Error creating chart. Please try again or refresh the page.</p>
+      </div>
+    `;
+  }
+}
+
+// Helper function to get chart label based on sensor type
+function getChartLabel(sensorType) {
+  switch(sensorType) {
+    case 'temperature':
+      return 'Temperature (°C)';
+    case 'humidity':
+      return 'Humidity (%)';
+    case 'co2':
+      return 'CO₂ Level (ppm)';
+    case 'ammonia':
+      return 'Ammonia Level (ppm)';
+    default:
+      return 'Value';
+  }
+}
+
+function initChartControls() {
+  const chartDataSelector = document.getElementById('chartDataSelector');
+  if (chartDataSelector) {
+    chartDataSelector.addEventListener('change', function() {
+      // Reload the chart with the selected sensor type
+      fetch(`/api/readings?coopId=${currentCoopId}`)
+        .then(response => response.json())
+        .then(readings => {
+          updateChart(readings, this.value);
+        })
+        .catch(error => {
+          console.error('Error updating chart:', error);
+        });
+    });
+  }
+}
+
   // Check authentication
   const currentUser = checkAuth();
   if (!currentUser) return; // Will redirect to signin if not authenticated
@@ -126,8 +440,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
   updateCoopManagementTitle();
 
-
-  // Update all localStorage calls to use user-specific data
   function showChickenCoopManagement() {
     const dashboardSection = document.getElementById('dashboard');
     const coopSection = document.getElementById('chickenCoopManagement');
@@ -176,7 +488,13 @@ document.addEventListener("DOMContentLoaded", () => {
     
     loadDashboardData();
 
+
+    
   }
+
+  
+
+  
 
 
 
@@ -604,11 +922,38 @@ if (editCoopForm) {
     }
   }
 
+  function showEmptyState() {
+    const tableBody = document.querySelector('tbody');
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr id="emptyStateRow">
+          <td colspan="5" class="empty-state-cell">
+            <div class="empty-state-container">
+              <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+              <span style="color: var(--text-light);">No sensor readings available. Click "Add Data" to record measurements.</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+    
+    // Also update the chart to show empty state
+    const chartContainer = document.querySelector('.chart');
+    if (chartContainer) {
+      chartContainer.innerHTML = `
+        <div class="chart-placeholder">
+          <i class='bx bx-line-chart'></i>
+          <p>No sensor readings available. Click "Add Data" to record measurements.</p>
+        </div>
+      `;
+    }
+  }
+
   function loadDashboardData() {
     if (!currentCoopId) return;
     
-    // Fetch the most recent reading
-    fetch(`/api/readings?coopId=${currentCoopId}&limit=1`)
+    // Fetch the readings from your API
+    fetch(`/api/readings?coopId=${currentCoopId}`)
       .then(response => {
         if (!response.ok) {
           throw new Error('Failed to fetch readings');
@@ -616,35 +961,43 @@ if (editCoopForm) {
         return response.json();
       })
       .then(readings => {
-        if (readings.length === 0) {
+        console.log(`Loaded ${readings.length} readings`);
+        
+        // Check for duplicates in the data
+        const uniqueReadings = [];
+        const readingIds = new Set();
+        
+        readings.forEach(reading => {
+          if (!readingIds.has(reading.ReadingID)) {
+            readingIds.add(reading.ReadingID);
+            uniqueReadings.push(reading);
+          } else {
+            console.warn(`Duplicate reading ID ${reading.ReadingID} found in API response`);
+          }
+        });
+        
+        if (readings.length !== uniqueReadings.length) {
+          console.warn(`Filtered out ${readings.length - uniqueReadings.length} duplicate readings`);
+        }
+        
+        if (uniqueReadings.length === 0) {
           // No readings available yet
           setZeroValues();
-          const tableBody = document.querySelector('tbody');
-          if (tableBody) {
-            tableBody.innerHTML = `
-                <tr id="emptyStateRow">
-              <td colspan="5" class="empty-state-cell">
-                <div class="empty-state-container">
-                  <i class='bx bx-database' style="font-size: 2.5rem; color: #c0c0c0; margin-bottom: 1rem;"></i>
-                  <p>No sensor readings available. Click "Add Data" to record measurements.</p>
-                </div>
-              </td>
-            </tr>
-            `;
-          }
+          showEmptyState();
         } else {
-          // Update dashboard with the latest reading
-          const latestReading = readings[0];
-          updateDashboardCards(latestReading);
+          // Get the latest reading (the one with the most recent timestamp)
+          const latestReading = [...uniqueReadings].sort((a, b) => 
+            new Date(b.TimeStamp) - new Date(a.TimeStamp)
+          )[0];
           
-          // Now fetch all readings for the table
-          return fetch(`/api/readings?coopId=${currentCoopId}`)
-            .then(response => response.json())
-            .then(allReadings => {
-              // Log the readings to verify the structure
-              console.log('All readings:', allReadings);
-              updateActivityTable(allReadings);
-            });
+          // Update dashboard with the latest reading
+          updateDashboardCards(latestReading);
+          updateActivityTable(uniqueReadings);
+          
+          // Update the chart with readings
+          const chartDataSelector = document.getElementById('chartDataSelector');
+          const selectedSensor = chartDataSelector ? chartDataSelector.value : 'temperature';
+          updateChart(uniqueReadings, selectedSensor);
         }
       })
       .catch(error => {
@@ -652,8 +1005,6 @@ if (editCoopForm) {
         showNotification('Failed to load sensor data', 'error');
       });
   }
-
-  // Load manure data from database
 
   const addDataBtn = document.getElementById('addDataBtn');
   const dataEntryModal = document.getElementById('dataEntryModal');
@@ -908,20 +1259,42 @@ function initDeleteConfirmationModal() {
   }
   
   
-  
   function updateActivityTable(readings) {
     const tableBody = document.querySelector('tbody');
     if (!tableBody) return;
     
-    // Clear existing rows except the empty state row
-    const emptyStateRow = document.getElementById('emptyStateRow');
-    if (emptyStateRow) {
-      emptyStateRow.style.display = 'none';
-    } else {
-      tableBody.innerHTML = '';
+    // If no readings, show empty state
+    if (!readings || readings.length === 0) {
+      const sensorSelector = document.getElementById('sensorSelector');
+      const sensorType = sensorSelector ? sensorSelector.value : 'sensor';
+      
+      tableBody.innerHTML = `
+        <tr id="emptyStateRow">
+          <td colspan="5" style="text-align: center; padding: 2rem;">
+            <i class='bx bx-data' style="font-size: 2rem; color: var(--text-light); display: block; margin-bottom: 0.5rem;"></i>
+            <span style="color: var(--text-light);">No ${sensorType} readings available. Click "Add Data" to record measurements.</span>
+          </td>
+        </tr>
+      `;
+      return;
     }
     
+    // Clear existing rows
+    tableBody.innerHTML = '';
+    
+    // Create a tracking set to prevent duplicates
+    const processedIds = new Set();
+    
     readings.forEach(reading => {
+      // Skip duplicate ReadingIDs
+      if (processedIds.has(reading.ReadingID)) {
+        console.log(`Skipping duplicate reading ID: ${reading.ReadingID}`);
+        return;
+      }
+      
+      // Add this reading ID to our processed set
+      processedIds.add(reading.ReadingID);
+      
       // Format date and time
       const timestamp = new Date(reading.TimeStamp);
       const formattedDate = timestamp.toLocaleDateString('en-US', { 
@@ -942,30 +1315,32 @@ function initDeleteConfirmationModal() {
       // IMPORTANT: Use the actual ReadingID from the database
       newRow.dataset.readingId = reading.ReadingID;
       
-      // Check if the reading is normal based on the sensor type
-      const isTemperatureNormal = reading.Temperature >= 26.0 && reading.Temperature <= 29.0;
-      const isHumidityNormal = reading.Humidity >= 50 && reading.Humidity <= 70;
-      const isCO2Normal = reading.CO2Level >= 350 && reading.CO2Level <= 500;
-      const isAmmoniaNormal = reading.AmmoniaLevel >= 0 && reading.AmmoniaLevel <= 0.25;
+      // Get sensor type and value
+      let value, isNormal, sensorType;
       
-      // Determine which reading to display based on what's available
-      let value, isNormal;
       if (reading.Temperature !== null && reading.Temperature !== undefined) {
         value = `${reading.Temperature}°C`;
-        isNormal = isTemperatureNormal;
+        isNormal = reading.Temperature >= 26.0 && reading.Temperature <= 29.0;
+        sensorType = 'temperature';
       } else if (reading.Humidity !== null && reading.Humidity !== undefined) {
         value = `${reading.Humidity}%`;
-        isNormal = isHumidityNormal;
+        isNormal = reading.Humidity >= 50 && reading.Humidity <= 70;
+        sensorType = 'humidity';
       } else if (reading.CO2Level !== null && reading.CO2Level !== undefined) {
         value = `${reading.CO2Level} ppm`;
-        isNormal = isCO2Normal;
+        isNormal = reading.CO2Level >= 350 && reading.CO2Level <= 500;
+        sensorType = 'co2';
       } else if (reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined) {
         value = `${reading.AmmoniaLevel} ppm`;
-        isNormal = isAmmoniaNormal;
+        isNormal = reading.AmmoniaLevel >= 0 && reading.AmmoniaLevel <= 0.25;
+        sensorType = 'ammonia';
       } else {
-        value = 'N/A';
-        isNormal = true;
+        // Skip readings without any sensor data
+        return;
       }
+      
+      // Store the sensor type as a data attribute
+      newRow.dataset.sensorType = sensorType;
       
       newRow.innerHTML = `
         <td>${formattedDate} • ${formattedTime}</td>
@@ -981,29 +1356,8 @@ function initDeleteConfirmationModal() {
       const deleteIcon = newRow.querySelector('.delete-icon');
       deleteIcon.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Pass the actual ReadingID from the database to the delete confirmation modal
-        console.log('Clicked delete for reading ID:', reading.ReadingID);
         showDeleteConfirmationModal(reading.ReadingID);
       });
-      
-      // Check current chart filter
-      const sensorSelector = document.getElementById('sensorSelector');
-      if (sensorSelector) {
-        const selectedSensor = sensorSelector.value;
-        if (selectedSensor !== 'all') {
-          const hasTemperature = reading.Temperature !== null && reading.Temperature !== undefined;
-          const hasHumidity = reading.Humidity !== null && reading.Humidity !== undefined;
-          const hasCO2 = reading.CO2Level !== null && reading.CO2Level !== undefined;
-          const hasAmmonia = reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined;
-          
-          if ((selectedSensor === 'temperature' && !hasTemperature) ||
-              (selectedSensor === 'humidity' && !hasHumidity) ||
-              (selectedSensor === 'co2' && !hasCO2) ||
-              (selectedSensor === 'ammonia' && !hasAmmonia)) {
-            newRow.style.display = 'none';
-          }
-        }
-      }
       
       tableBody.appendChild(newRow);
     });
@@ -1084,8 +1438,17 @@ function initDeleteConfirmationModal() {
         const modal = document.getElementById('deleteConfirmationModal');
         if (modal) modal.classList.remove('active');
         
-        // Reload dashboard data to refresh the table
-        loadDashboardData();
+        // Remove just the deleted item from DOM for immediate feedback
+        const row = document.querySelector(`tr[data-reading-id="${readingId}"]`);
+        if (row) {
+          row.remove();
+        }
+        
+        // Then reload all data to ensure consistency
+        setTimeout(() => {
+          loadDashboardData();
+        }, 300);
+        
         showNotification('Sensor reading deleted successfully!', 'success');
       } else {
         showNotification(data.error || 'Failed to delete reading', 'error');
@@ -1189,6 +1552,84 @@ function initDeleteConfirmationModal() {
     }, 5000);
   }
 
+  // Function to handle sensor type dropdown changes
+function handleSensorTypeChange() {
+  const sensorSelector = document.getElementById('sensorSelector');
+  if (!sensorSelector) return;
+  
+  const selectedType = sensorSelector.value;
+  console.log('Sensor type changed to:', selectedType);
+  
+  // Since our filtering isn't working properly, let's fetch fresh data
+  // This is more reliable than trying to filter the existing DOM elements
+  if (currentCoopId) {
+    // Show loading indicator
+    const tableBody = document.querySelector('tbody');
+    if (tableBody) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 1rem;">
+            <i class='bx bx-loader-alt bx-spin' style="font-size: 1.5rem; color: var(--primary-color);"></i>
+            <p style="margin-top: 0.5rem;">Loading ${selectedType} readings...</p>
+          </td>
+        </tr>
+      `;
+    }
+    
+    // Fetch fresh data
+    fetch(`/api/readings?coopId=${currentCoopId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch readings');
+        }
+        return response.json();
+      })
+      .then(readings => {
+        console.log(`Fetched ${readings.length} readings for filtering`);
+        
+        // Filter readings based on selected sensor type
+        const filteredReadings = readings.filter(reading => {
+          switch(selectedType) {
+            case 'temperature':
+              return reading.Temperature !== null && reading.Temperature !== undefined;
+            case 'humidity':
+              return reading.Humidity !== null && reading.Humidity !== undefined;
+            case 'co2':
+              return reading.CO2Level !== null && reading.CO2Level !== undefined;
+            case 'ammonia':
+              return reading.AmmoniaLevel !== null && reading.AmmoniaLevel !== undefined;
+            default:
+              return false;
+          }
+        });
+        
+        console.log(`Filtered to ${filteredReadings.length} ${selectedType} readings`);
+        
+        // Update table with filtered readings
+        updateActivityTable(filteredReadings);
+        
+        // Also update chart
+        updateChart(filteredReadings, selectedType);
+      })
+      .catch(error => {
+        console.error('Error updating sensor readings:', error);
+        showNotification('Failed to load sensor readings', 'error');
+        
+        // Show error in table
+        if (tableBody) {
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 1rem; color: var(--danger-color);">
+                <i class='bx bx-error-circle' style="font-size: 1.5rem;"></i>
+                <p style="margin-top: 0.5rem;">Failed to load ${selectedType} readings.</p>
+              </td>
+            </tr>
+          `;
+        }
+      });
+  }
+}
+
   // Add this function if it doesn't exist already
   function openProfileModal() {
     const currentUser = window.currentUser;
@@ -1248,8 +1689,7 @@ function initDeleteConfirmationModal() {
     profileEditModal.classList.add('active');
   }
 
-// Add the form submission handler if it doesn't exist
-
+// Add the  profile form submission handler if it doesn't exist
 const profileEditForm = document.getElementById('profileEditForm');
 if (profileEditForm) {
   profileEditForm.addEventListener('submit', function(e) {
@@ -1404,6 +1844,23 @@ if (profileEditForm) {
       openEditCoopModal(coopId);
     }
   });
+
+   initChartControls();
+  
+   document.addEventListener('data-updated', function() {
+     loadDashboardData();
+   });
+  if (sensorSelector) {
+    // Remove any existing event listeners to avoid duplicates
+    const newSelector = sensorSelector.cloneNode(true);
+    sensorSelector.parentNode.replaceChild(newSelector, sensorSelector);
+    
+    // Add event listener to the new selector
+    newSelector.addEventListener('change', function() {
+      console.log('Sensor selector changed to:', this.value);
+      handleSensorTypeChange();
+    });
+  }
 });
 
 // Delete sensor reading
